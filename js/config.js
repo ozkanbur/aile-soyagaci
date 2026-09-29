@@ -1,6 +1,6 @@
 const CONFIG = {
   APP_NAME: "Dijital Aile Soyağacı",
-  FAMILY_NAME: "Kanbur Ailesi",
+  FAMILY_NAME: "GENİŞ AİLE",
   APP_SLOGAN: "Geçmişimizden Geleceğimize...",
   APP_VERSION: "v1.0.0",
   // Firebase'deki ilk kişinin ID'si (Demo veride person_001 veya person_006'dır)
