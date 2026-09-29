@@ -24,9 +24,16 @@ const App = {
     const brandTitle = document.getElementById('header-brand-title');
     if (brandTitle) brandTitle.innerText = CONFIG.FAMILY_NAME;
 
+    // Yönetici butonuna hemen varsayılan işlev ata (hata olsa bile çalışsın)
+    this.updateAdminVisibility(false);
+
     // 2. Initialize Tree Engine & Search
-    TreeEngine.init('#tree-canvas-svg');
-    Search.init('#header-search-input', '#search-results-dropdown');
+    try {
+      TreeEngine.init('#tree-canvas-svg');
+      Search.init('#header-search-input', '#search-results-dropdown');
+    } catch (err) {
+      console.error("Ağaç/Arama başlatma hatası:", err);
+    }
 
     // 3. Bind Keyboard ESC key to close open modals
     document.addEventListener('keydown', (e) => {
@@ -35,17 +42,25 @@ const App = {
       }
     });
 
-    // 4. Önce Database (Firebase app başlar), sonra Auth
+    // 4. ÖNCE Database (Firebase uygulaması burada başlar), SONRA Auth
     try {
       await Database.init();
     } catch (err) {
       console.error("Database başlatma hatası:", err);
     }
+
     try {
       Auth.init();
     } catch (err) {
       console.error("Auth başlatma hatası:", err);
     }
+
+    // 5. Register Data Change Listener
+    Database.onDataChange((people, rels) => {
+      this.updateHeaderStats(people, rels);
+      this.renderTree();
+      this.updateAdminVisibility(Auth.isAdmin());
+    });
 
     // 6. Register Auth Listener
     Auth.onAuthStateChanged((isAdmin) => {
@@ -59,6 +74,10 @@ const App = {
   setCenterPerson(personId) {
     this.currentCenterPersonId = personId;
     this.renderTree();
+    TreeEngine.recenter();
+  },
+
+  recenterTree() {
     TreeEngine.recenter();
   },
 
@@ -79,7 +98,7 @@ const App = {
     const totalCount = peopleArr.length;
     const livingCount = peopleArr.filter(p => !p.deathDate).length;
     const deceasedCount = peopleArr.filter(p => !!p.deathDate).length;
-    
+
     const genLevels = Relationships.calculateGenerations(
       this.currentCenterPersonId || CONFIG.DEFAULT_CENTER_PERSON_ID,
       peopleDict || {},
@@ -128,7 +147,7 @@ const App = {
       } else {
         adminLoginBtn.className = 'btn btn-primary btn-sm';
         adminLoginBtn.innerHTML = '🔐 Yönetici Girişi';
-        adminLoginBtn.onclick = () => window.location.href = 'login.html';
+        adminLoginBtn.onclick = () => { window.location.href = 'login.html'; };
       }
     }
   },
@@ -175,7 +194,7 @@ const App = {
             ${isDeceased ? '🕊️ Vefat Etmiş' : '🟢 Hayatta'} ${age !== null ? `(${age} yaşında)` : ''}
           </div>
 
-          <div style="margin-top: 10px; display: flex; gap: 8px;">
+          <div style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap;">
             <button class="btn btn-primary btn-sm" onclick="App.setCenterPerson('${person.id}'); Modal.close('#person-detail-modal');">
               🎯 Merkeze Al
             </button>
