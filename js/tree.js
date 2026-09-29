@@ -201,7 +201,7 @@ const TreeEngine = {
       fo.setAttribute('height', cardH);
       fo.setAttribute('data-person-id', pid);
 
-      const romanGen = Utils.toRomanGeneration(Math.abs(level) + 1);
+      const romanGen = Utils.toRomanGeneration(level - sortedLevels[0] + 1);
       const lifeSpan = Utils.getLifeSpan(person.birthDate, person.deathDate);
       const isDeceased = !!person.deathDate;
       const photoHtml = person.photoUrl 
