@@ -1,0 +1,13 @@
+{
+  "rules": {
+    ".read": true,
+    "people": {
+      ".read": true,
+      ".write": "auth != null"
+    },
+    "relationships": {
+      ".read": true,
+      ".write": "auth != null"
+    }
+  }
+}

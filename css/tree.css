@@ -1,0 +1,102 @@
+/* ==========================================================================
+   INTERACTIVE TREE ENGINE & ZOOM/PAN CANVAS STYLES (tree.css)
+   ========================================================================== */
+
+.tree-view-wrapper {
+  position: absolute;
+  top: 70px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  user-select: none;
+  touch-action: none; /* Allows custom pinch-zoom & drag pan gestures */
+}
+
+/* SVG World Container */
+#tree-canvas-svg {
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+}
+
+#tree-canvas-svg:active {
+  cursor: grabbing;
+}
+
+/* Connector Lines Styling */
+.tree-connector-line {
+  fill: none;
+  stroke: rgba(212, 175, 55, 0.45);
+  stroke-width: 2px;
+  stroke-dasharray: 4;
+  animation: dashAnimation 30s linear infinite;
+  transition: stroke var(--transition-normal), stroke-width var(--transition-normal);
+}
+
+.tree-connector-line.spouse-line {
+  stroke: rgba(236, 72, 153, 0.6);
+  stroke-width: 2.5px;
+  stroke-dasharray: none;
+}
+
+.tree-connector-line.parent-child-line {
+  stroke: rgba(59, 130, 246, 0.6);
+  stroke-width: 2px;
+  stroke-dasharray: none;
+}
+
+/* Floating Zoom & Pan Control Bar */
+.tree-controls-bar {
+  position: absolute;
+  bottom: 30px;
+  right: 30px;
+  z-index: var(--z-controls);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--bg-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 8px;
+  border-radius: 12px;
+  border: 1px solid var(--gold-border);
+  box-shadow: var(--shadow-lg);
+}
+
+.control-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-main);
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.control-btn:hover {
+  background: var(--gold-gradient);
+  color: var(--text-inverse);
+  box-shadow: var(--shadow-gold);
+}
+
+/* Generation Level Indicator Headers */
+.generation-strip {
+  position: absolute;
+  left: 20px;
+  z-index: 5;
+  background: rgba(10, 17, 40, 0.7);
+  border-left: 3px solid var(--gold-primary);
+  padding: 4px 12px;
+  border-radius: 0 8px 8px 0;
+  color: var(--gold-light);
+  font-family: var(--font-heading);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  pointer-events: none;
+}

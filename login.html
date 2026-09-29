@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Yönetici Girişi - Dijital Aile Soyağacı</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/global.css">
+
+  <style>
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .login-card {
+      width: 100%;
+      max-width: 420px;
+      background: var(--bg-card);
+      border: 1.5px solid var(--gold-border);
+      border-radius: 20px;
+      padding: 36px 28px;
+      box-shadow: var(--shadow-lg), 0 0 50px rgba(212, 175, 55, 0.15);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .login-emblem {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #253257 0%, #0a1128 100%);
+      border: 2px solid var(--gold-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 34px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow-gold);
+    }
+
+    .login-title {
+      font-family: var(--font-heading);
+      font-size: 24px;
+      color: var(--gold-light);
+      margin-bottom: 4px;
+    }
+
+    .login-slogan {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-style: italic;
+      margin-bottom: 28px;
+    }
+
+    .login-form {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      text-align: left;
+    }
+
+    .password-wrapper {
+      position: relative;
+    }
+
+    .toggle-pwd-btn {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .demo-info-note {
+      background: rgba(234, 179, 8, 0.1);
+      border: 1px solid rgba(234, 179, 8, 0.3);
+      color: #fde047;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      margin-top: 10px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-card">
+    <div class="login-emblem">🌳</div>
+    <h1 class="login-title">AİLEMİZİN SOYAĞACI</h1>
+    <div class="login-slogan">"Geçmişimizden geleceğimize..."</div>
+
+    <form class="login-form" onsubmit="handleLogin(event)">
+      <div class="form-group">
+        <label class="form-label">E-posta Adresi (Canlı Mod için)</label>
+        <input type="email" id="login-email" class="form-control" placeholder="admin@family.com">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Yönetici Şifresi *</label>
+        <div class="password-wrapper">
+          <input type="password" id="login-password" class="form-control" required placeholder="••••••••">
+          <button type="button" class="toggle-pwd-btn" onclick="togglePasswordVisibility()">👁 Göster</button>
+        </div>
+      </div>
+
+      <div class="demo-info-note">
+        ⚡ <strong>Demo Mod Notu:</strong> Firebase canlı veritabanı kurulana kadar herhangi bir test şifresi (örn: <code>123456</code>) yazarak giriş yapabilirsiniz.
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px; padding: 12px;">
+        🔐 GİRİŞ YAP
+      </button>
+    </form>
+
+    <div style="margin-top: 24px; border-top: 1px dashed rgba(255,255,255,0.1); width: 100%; padding-top: 16px;">
+      <a href="index.html" class="btn btn-secondary btn-sm" style="width: 100%;">
+        👁️ Misafir Olarak Devam Et
+      </a>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <!-- FIREBASE SDK SCRIPTS -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <script src="js/config.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/database.js"></script>
+  <script src="js/auth.js"></script>
+
+  <script>
+    Auth.init();
+
+    function togglePasswordVisibility() {
+      const pwdInput = document.getElementById('login-password');
+      const btn = document.querySelector('.toggle-pwd-btn');
+      if (pwdInput.type === 'password') {
+        pwdInput.type = 'text';
+        btn.innerText = '🙈 Gizle';
+      } else {
+        pwdInput.type = 'password';
+        btn.innerText = '👁 Göster';
+      }
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      const email = document.getElementById('login-email').value || 'admin@family.com';
+      const password = document.getElementById('login-password').value;
+
+      try {
+        await Auth.login(email, password);
+        Utils.showToast("✓ Giriş başarılı! Yönetici paneline yönlendiriliyorsunuz...", "success");
+        setTimeout(() => window.location.href = "index.html", 1000);
+      } catch (err) {
+        Utils.showToast("Giriş Başarısız: " + err.message, "error");
+      }
+    }
+  </script>
+</body>
+</html>

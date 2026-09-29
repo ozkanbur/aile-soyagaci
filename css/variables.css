@@ -1,0 +1,65 @@
+/* ==========================================================================
+   DIJITAL AILE SOYAĞACI - DESIGN SYSTEM TOKENS (variables.css)
+   Theme: Luxury Navy & Antique Gold Digital Archive
+   ========================================================================== */
+
+:root {
+  /* Color Palette - Deep Navy & Anthracite Foundation */
+  --bg-primary: #0a1128;         /* Deepest Obsidian Navy */
+  --bg-secondary: #121d3a;       /* Dark Royal Navy */
+  --bg-card: #1c2541;            /* Rich Anthracite Card Fill */
+  --bg-card-hover: #253257;      /* Hover Accent State */
+  --bg-modal: #0f172a;           /* Deep Modal Backdrop Color */
+  --bg-glass: rgba(28, 37, 65, 0.85);
+
+  /* Gold & Metallic Accents */
+  --gold-primary: #d4af37;       /* Antique Matte Gold */
+  --gold-light: #f4e285;         /* Champagne Gold Highlight */
+  --gold-dark: #aa820a;          /* Deep Burnished Gold */
+  --gold-gradient: linear-gradient(135deg, #d4af37 0%, #f4e285 50%, #aa820a 100%);
+  --gold-border: rgba(212, 175, 55, 0.35);
+  --gold-glow: rgba(212, 175, 55, 0.25);
+
+  /* Text & Typography Colors */
+  --text-main: #f8f9fa;          /* Crisp Off-White */
+  --text-muted: #94a3b8;         /* Slate Grey Text */
+  --text-gold: #e2c044;          /* Warm Gold Highlight Text */
+  --text-inverse: #0a1128;       /* Dark Text for Gold Buttons */
+
+  /* Gender Accent Colors */
+  --male-accent: #3b82f6;        /* Sapphire Blue */
+  --female-accent: #ec4899;      /* Rose Quartz Pink */
+
+  /* Status Indicators */
+  --living-indicator: #10b981;   /* Emerald Green Dot */
+  --deceased-indicator: #6b7280; /* Elegant Slate Remembrance */
+  --danger-color: #ef4444;       /* Crimson Warning */
+
+  /* Shadows & Elevation */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.6);
+  --shadow-gold: 0 4px 20px rgba(212, 175, 55, 0.25);
+
+  /* Typography Fonts */
+  --font-heading: 'Cinzel', 'Playfair Display', Georgia, serif;
+  --font-body: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* Card & Node Dimensions */
+  --card-width: 220px;
+  --card-height: 310px;
+  --card-radius: 14px;
+
+  /* Transitions & Animations */
+  --transition-fast: 0.15s ease-out;
+  --transition-normal: 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-slow: 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Z-Index Hierarchy */
+  --z-tree: 10;
+  --z-controls: 50;
+  --z-header: 100;
+  --z-bottom-nav: 200;
+  --z-modal: 500;
+  --z-toast: 1000;
+}

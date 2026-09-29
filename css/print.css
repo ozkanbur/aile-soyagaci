@@ -1,0 +1,100 @@
+/* ==========================================================================
+   PRINT STYLESHEET & DECORATIVE FAMILY FRAME (print.css)
+   ========================================================================== */
+
+@media print {
+  /* Hide UI Overlays, Headers, Controls, and Navigation */
+  .app-header,
+  .tree-controls-bar,
+  .mobile-bottom-nav,
+  .admin-toolbar,
+  .modal-backdrop,
+  #toast-container,
+  button,
+  .btn {
+    display: none !important;
+  }
+
+  /* Reset Body for Paper */
+  html, body {
+    width: 100% !important;
+    height: auto !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    overflow: visible !important;
+    font-size: 12pt !important;
+  }
+
+  .tree-view-wrapper {
+    position: relative !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Ornate Decorative Family Border Frame */
+  .print-family-frame {
+    display: block !important;
+    border: 8px double #1a237e;
+    padding: 24px;
+    margin: 10px;
+    position: relative;
+    background: #ffffff;
+    box-shadow: none !important;
+  }
+
+  .print-header-banner {
+    text-align: center;
+    margin-bottom: 24px;
+    border-bottom: 2px solid #1a237e;
+    padding-bottom: 12px;
+  }
+
+  .print-header-banner h1 {
+    font-family: var(--font-heading), 'Cinzel', serif;
+    font-size: 26pt;
+    color: #0d47a1;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .print-header-banner .print-subtitle {
+    font-size: 12pt;
+    color: #555555;
+    font-style: italic;
+  }
+
+  /* Person Cards Print View Optimization */
+  .person-card {
+    border: 1.5px solid #1a237e !important;
+    background: #f8fafc !important;
+    color: #0f172a !important;
+    box-shadow: none !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    transform: none !important;
+  }
+
+  .card-full-name {
+    color: #0d47a1 !important;
+  }
+
+  .card-generation-badge {
+    background: #1a237e !important;
+    color: #ffffff !important;
+  }
+
+  .tree-connector-line {
+    stroke: #1a237e !important;
+    stroke-width: 2px !important;
+    stroke-dasharray: none !important;
+  }
+}
+
+/* Screen hidden printable wrapper elements */
+.print-family-frame {
+  display: none;
+}

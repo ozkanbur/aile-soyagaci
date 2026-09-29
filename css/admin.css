@@ -1,0 +1,103 @@
+/* ==========================================================================
+   ADMIN & MANAGEMENT PANELS (admin.css)
+   ========================================================================== */
+
+.admin-toolbar {
+  position: fixed;
+  top: 70px;
+  left: 0;
+  right: 0;
+  height: 48px;
+  background: linear-gradient(90deg, #1e1b4b 0%, #0f172a 100%);
+  border-bottom: 1px solid var(--gold-border);
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  box-shadow: var(--shadow-sm);
+}
+
+.admin-toolbar-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-heading);
+  font-size: 13px;
+  color: var(--gold-light);
+  letter-spacing: 0.05em;
+}
+
+.admin-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-btn-sm {
+  padding: 6px 14px;
+  font-size: 12px;
+  border-radius: 6px;
+}
+
+/* Quick Child Wizard Highlight Card */
+.wizard-box {
+  background: rgba(212, 175, 55, 0.08);
+  border: 1px dashed var(--gold-border);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.wizard-title {
+  font-size: 14px;
+  font-family: var(--font-heading);
+  color: var(--gold-light);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Relationship Pair Row in Relationship Manager */
+.relationship-item-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(10, 17, 40, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 10px 16px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.relationship-entities {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+}
+
+.relationship-type-pill {
+  background: rgba(212, 175, 55, 0.15);
+  color: var(--gold-light);
+  border: 1px solid var(--gold-border);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.danger-alert-box {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}

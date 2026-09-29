@@ -1,0 +1,236 @@
+{
+  "people": {
+    "person_001": {
+      "id": "person_001",
+      "firstName": "Ahmet",
+      "lastName": "Kanbur",
+      "nickname": "Dede Ahmet",
+      "gender": "male",
+      "birthDate": "1935-05-12",
+      "birthPlace": "Rize",
+      "deathDate": "2010-04-03",
+      "deathPlace": "İstanbul",
+      "occupation": "Tüccar",
+      "photoUrl": "",
+      "notes": "Ailemizin kurucu büyük babası, çalışkan ve adaletli bir insan."
+    },
+    "person_002": {
+      "id": "person_002",
+      "firstName": "Fatma",
+      "lastName": "Kanbur",
+      "nickname": "Fatma Hanım",
+      "gender": "female",
+      "birthDate": "1938-08-20",
+      "birthPlace": "Trabzon",
+      "deathDate": "2018-11-15",
+      "deathPlace": "İstanbul",
+      "occupation": "Ev Hanımı",
+      "photoUrl": "",
+      "notes": "Aile geleneklerini yaşatan sevgi dolu ninemiz."
+    },
+    "person_003": {
+      "id": "person_003",
+      "firstName": "Mehmet",
+      "lastName": "Kanbur",
+      "nickname": "Kaptan",
+      "gender": "male",
+      "birthDate": "1960-03-15",
+      "birthPlace": "Rize",
+      "deathDate": "",
+      "deathPlace": "",
+      "occupation": "Makine Mühendisi",
+      "photoUrl": "",
+      "notes": "Özkan'ın babası. Deniz tutkunu."
+    },
+    "person_004": {
+      "id": "person_004",
+      "firstName": "Ayşe",
+      "lastName": "Kanbur",
+      "nickname": "",
+      "gender": "female",
+      "birthDate": "1963-09-10",
+      "birthPlace": "İstanbul",
+      "deathDate": "",
+      "deathPlace": "",
+      "occupation": "Öğretmen",
+      "photoUrl": "",
+      "notes": "Özkan'ın annesi. Emekli matematik öğretmeni."
+    },
+    "person_005": {
+      "id": "person_005",
+      "firstName": "Ali",
+      "lastName": "Kanbur",
+      "nickname": "Amca Ali",
+      "gender": "male",
+      "birthDate": "1962-07-04",
+      "birthPlace": "Rize",
+      "deathDate": "",
+      "deathPlace": "",
+      "occupation": "Mimar",
+      "photoUrl": "",
+      "notes": "Mehmet'in erkek kardeşi, amca."
+    },
+    "person_006": {
+      "id": "person_006",
+      "firstName": "Özkan",
+      "lastName": "Kanbur",
+      "nickname": "Özi",
+      "gender": "male",
+      "birthDate": "1988-11-24",
+      "birthPlace": "İstanbul",
+      "deathDate": "",
+      "deathPlace": "",
+      "occupation": "Yazılım Mimarı",
+      "photoUrl": "",
+      "notes": "Soyağacı uygulamasının kurucusu ve yöneticisi."
+    },
+    "person_007": {
+      "id": "person_007",
+      "firstName": "Elif",
+      "lastName": "Kanbur",
+      "nickname": "",
+      "gender": "female",
+      "birthDate": "1990-02-18",
+      "birthPlace": "Ankara",
+      "deathDate": "",
+      "deathPlace": "",
+      "occupation": "Grafik Tasarımcı",
+      "photoUrl": "",
+      "notes": "Özkan'ın eşi."
+    },
+    "person_008": {
+      "id": "person_008",
+      "firstName": "Burak",
+      "lastName": "Kanbur",
+      "nickname": "",
+      "gender": "male",
+      "birthDate": "1992-06-30",
+      "birthPlace": "İstanbul",
+      "deathDate": "",
+      "deathPlace": "",
+      "occupation": "Finans Analisti",
+      "photoUrl": "",
+      "notes": "Özkan'ın erkek kardeşi."
+    },
+    "person_009": {
+      "id": "person_009",
+      "firstName": "Duru",
+      "lastName": "Kanbur",
+      "nickname": "Prenses",
+      "gender": "female",
+      "birthDate": "2018-04-12",
+      "birthPlace": "İstanbul",
+      "deathDate": "",
+      "deathPlace": "",
+      "occupation": "Öğrenci",
+      "photoUrl": "",
+      "notes": "Özkan ve Elif'in kızı."
+    },
+    "person_010": {
+      "id": "person_010",
+      "firstName": "Kaan",
+      "lastName": "Kanbur",
+      "nickname": "",
+      "gender": "male",
+      "birthDate": "2021-09-05",
+      "birthPlace": "İstanbul",
+      "deathDate": "",
+      "deathPlace": "",
+      "occupation": "",
+      "photoUrl": "",
+      "notes": "Özkan ve Elif'in oğlu."
+    }
+  },
+  "relationships": {
+    "rel_001": {
+      "id": "rel_001",
+      "type": "spouse",
+      "from": "person_001",
+      "to": "person_002"
+    },
+    "rel_002": {
+      "id": "rel_002",
+      "type": "parent",
+      "from": "person_001",
+      "to": "person_003"
+    },
+    "rel_003": {
+      "id": "rel_003",
+      "type": "parent",
+      "from": "person_002",
+      "to": "person_003"
+    },
+    "rel_004": {
+      "id": "rel_004",
+      "type": "parent",
+      "from": "person_001",
+      "to": "person_005"
+    },
+    "rel_005": {
+      "id": "rel_005",
+      "type": "parent",
+      "from": "person_002",
+      "to": "person_005"
+    },
+    "rel_006": {
+      "id": "rel_006",
+      "type": "spouse",
+      "from": "person_003",
+      "to": "person_004"
+    },
+    "rel_007": {
+      "id": "rel_007",
+      "type": "parent",
+      "from": "person_003",
+      "to": "person_006"
+    },
+    "rel_008": {
+      "id": "rel_008",
+      "type": "parent",
+      "from": "person_004",
+      "to": "person_006"
+    },
+    "rel_009": {
+      "id": "rel_009",
+      "type": "parent",
+      "from": "person_003",
+      "to": "person_008"
+    },
+    "rel_010": {
+      "id": "rel_010",
+      "type": "parent",
+      "from": "person_004",
+      "to": "person_008"
+    },
+    "rel_011": {
+      "id": "rel_011",
+      "type": "spouse",
+      "from": "person_006",
+      "to": "person_007"
+    },
+    "rel_012": {
+      "id": "rel_012",
+      "type": "parent",
+      "from": "person_006",
+      "to": "person_009"
+    },
+    "rel_013": {
+      "id": "rel_013",
+      "type": "parent",
+      "from": "person_007",
+      "to": "person_009"
+    },
+    "rel_014": {
+      "id": "rel_014",
+      "type": "parent",
+      "from": "person_006",
+      "to": "person_010"
+    },
+    "rel_015": {
+      "id": "rel_015",
+      "type": "parent",
+      "from": "person_007",
+      "to": "person_010"
+    }
+  }
+}

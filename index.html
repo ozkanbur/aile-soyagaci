@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="Dijital Aile Soyağacı ve Dijital Aile Arşivi Uygulaması">
+  <title>Dijital Aile Soyağacı</title>
+
+  <!-- Google Fonts for Luxury & Modern Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Application Stylesheets -->
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/global.css">
+  <link rel="stylesheet" href="css/header.css">
+  <link rel="stylesheet" href="css/tree.css">
+  <link rel="stylesheet" href="css/person-card.css">
+  <link rel="stylesheet" href="css/modal.css">
+  <link rel="stylesheet" href="css/admin.css">
+  <link rel="stylesheet" href="css/mobile.css">
+  <link rel="stylesheet" href="css/print.css">
+</head>
+<body>
+
+  <!-- APP HEADER NAVBAR -->
+  <header class="app-header">
+    <div class="header-brand" onclick="App.setCenterPerson(CONFIG.DEFAULT_CENTER_PERSON_ID)">
+      <div class="brand-emblem">🌳</div>
+      <div class="brand-info">
+        <span class="brand-title" id="header-brand-title">Aile Soyağacı</span>
+        <span class="brand-subtitle">Dijital Aile Arşivi</span>
+      </div>
+    </div>
+
+    <!-- Header Statistics Summary Ticker -->
+    <div class="header-stats">
+      <div class="stat-item">
+        <span class="stat-value" id="stat-total-count">0</span>
+        <span class="stat-label">Birey</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <span class="stat-value" id="stat-gen-count">0</span>
+        <span class="stat-label">Kuşak</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <span class="stat-value" id="stat-living-count">0</span>
+        <span class="stat-label">Yaşayan</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <span class="stat-value" id="stat-deceased-count">0</span>
+        <span class="stat-label">Vefat</span>
+      </div>
+    </div>
+
+    <!-- Header Search Input -->
+    <div class="header-search">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="header-search-input" placeholder="Ailede ara (ad, lakap, meslek)..." autocomplete="off">
+      <div id="search-results-dropdown" style="display:none; position:absolute; top: 110%; left:0; right:0; background: var(--bg-card); border: 1px solid var(--gold-border); border-radius: 12px; box-shadow: var(--shadow-lg); max-height: 350px; overflow-y: auto; z-index: 200;"></div>
+    </div>
+
+    <!-- Header Right Actions & Auth Status -->
+    <div class="header-actions">
+      <div id="app-mode-badge" class="badge badge-demo">⚡ Demo Mod</div>
+      <button id="header-admin-btn" class="btn btn-primary btn-sm">🔐 Yönetici Girişi</button>
+    </div>
+  </header>
+
+  <!-- ADMIN MANAGEMENT TOOLBAR (Visible when logged in as Admin) -->
+  <div id="admin-toolbar" class="admin-toolbar" style="display: none;">
+    <div class="admin-toolbar-title">
+      <span>⚙️ YÖNETİCİ PANELİ</span>
+    </div>
+    <div class="admin-actions-group">
+      <button class="btn btn-primary btn-sm" onclick="Admin.openAddPersonModal()">+ Kişi Ekle</button>
+      <button class="btn btn-primary btn-sm" onclick="Admin.openNewChildWizard()">👶 + Yeni Çocuk</button>
+      <button class="btn btn-secondary btn-sm" onclick="Admin.openRelationshipModal()">🔗 İlişki Yönetimi</button>
+      <button class="btn btn-secondary btn-sm" onclick="Modal.open('#backup-modal')">💾 Veri Yedeği</button>
+      <button class="btn btn-secondary btn-sm" onclick="PrintManager.triggerPrint()">🖨 Soyağacını Yazdır</button>
+    </div>
+  </div>
+
+  <!-- MAIN INTERACTIVE TREE CANVAS -->
+  <main class="tree-view-wrapper">
+    <svg id="tree-canvas-svg"></svg>
+
+    <!-- Floating Zoom & Pan Control Bar -->
+    <div class="tree-controls-bar">
+      <button class="control-btn" title="Yakınlaştır (+)" onclick="TreeEngine.zoomIn()">+</button>
+      <button class="control-btn" title="Uzaklaştır (-)" onclick="TreeEngine.zoomOut()">-</button>
+      <button class="control-btn" title="Sıfırla" onclick="TreeEngine.resetZoom()">⟲</button>
+      <button class="control-btn" title="Merkeze Odakla" onclick="TreeEngine.recenter()">🎯</button>
+    </div>
+  </main>
+
+  <!-- MOBILE FLOATING BOTTOM NAVIGATION BAR -->
+  <nav class="mobile-bottom-nav">
+    <div class="bottom-nav-item active" onclick="App.recenterTree()">
+      <span class="nav-icon">🌳</span>
+      <span>Soyağacı</span>
+    </div>
+    <div class="bottom-nav-item" onclick="document.getElementById('header-search-input').focus()">
+      <span class="nav-icon">🔎</span>
+      <span>Ara</span>
+    </div>
+    <div class="bottom-nav-item" onclick="App.setCenterPerson(CONFIG.DEFAULT_CENTER_PERSON_ID)">
+      <span class="nav-icon">👨‍👩‍👧</span>
+      <span>Ailem</span>
+    </div>
+    <div class="bottom-nav-item" onclick="window.location.href='login.html'">
+      <span class="nav-icon">🔐</span>
+      <span>Yönetim</span>
+    </div>
+  </nav>
+
+  <!-- MODAL 1: PERSON DETAIL MODAL (Futbolcu Kartı Profile Showcase) -->
+  <div id="person-detail-modal" class="modal-backdrop">
+    <div class="modal-window">
+      <div class="modal-header">
+        <div class="modal-title">🏆 Kişi Profil Kartı</div>
+        <button class="modal-close-btn" onclick="Modal.close('#person-detail-modal')">&times;</button>
+      </div>
+      <div class="modal-body" id="person-detail-body">
+        <!-- Dynamically populated by App.openPersonDetailModal -->
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 2: ADMIN PERSON EDIT/CREATE FORM -->
+  <div id="person-edit-modal" class="modal-backdrop">
+    <div class="modal-window">
+      <div class="modal-header">
+        <div class="modal-title" id="modal-person-title">Kişi Bilgileri</div>
+        <button class="modal-close-btn" onclick="Modal.close('#person-edit-modal')">&times;</button>
+      </div>
+      <form id="person-form" onsubmit="Admin.handleSavePerson(event)">
+        <div class="modal-body">
+          <input type="hidden" id="form-person-id">
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Ad *</label>
+              <input type="text" id="form-first-name" class="form-control" required placeholder="Örn: Özkan">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Soyad *</label>
+              <input type="text" id="form-last-name" class="form-control" required placeholder="Örn: Kanbur">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Lakap (Opsiyonel)</label>
+              <input type="text" id="form-nickname" class="form-control" placeholder="Örn: Kaptan">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Cinsiyet</label>
+              <select id="form-gender" class="form-control">
+                <option value="male">Erkek</option>
+                <option value="female">Kadın</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Doğum Tarihi</label>
+              <input type="date" id="form-birth-date" class="form-control">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Doğum Yeri</label>
+              <input type="text" id="form-birth-place" class="form-control" placeholder="Örn: Rize">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Vefat Tarihi (Yaşıyorsa boş bırakın)</label>
+              <input type="date" id="form-death-date" class="form-control">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Vefat Yeri</label>
+              <input type="text" id="form-death-place" class="form-control" placeholder="Örn: İstanbul">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Meslek</label>
+            <input type="text" id="form-occupation" class="form-control" placeholder="Örn: Yazılım Mimarı">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Fotoğraf URL (Google Drive veya Resim Bağlantısı)</label>
+            <input type="url" id="form-photo-url" class="form-control" placeholder="https://drive.google.com/file/d/...">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Açıklama & Aile Notları</label>
+            <textarea id="form-notes" class="form-control" rows="3" placeholder="Kişi hakkında kısa biyografi..."></textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="Modal.close('#person-edit-modal')">İptal</button>
+          <button type="submit" class="btn btn-primary">Kaydet</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 3: "YENİ ÇOCUK" FAST WORKFLOW WIZARD -->
+  <div id="child-wizard-modal" class="modal-backdrop">
+    <div class="modal-window">
+      <div class="modal-header">
+        <div class="modal-title">👶 Yeni Çocuk Ekleyin</div>
+        <button class="modal-close-btn" onclick="Modal.close('#child-wizard-modal')">&times;</button>
+      </div>
+      <form id="child-form" onsubmit="Admin.handleSaveNewChild(event)">
+        <div class="modal-body">
+          <div class="wizard-box">
+            <div class="wizard-title">💡 Anne ve Baba Otomatik Bağlantısı</div>
+            <div style="font-size: 13px; color: var(--text-main);">
+              Çocuğun bilgilerini doldurun ve anne/babasını seçin. Sistem çocuk kaydını ve ebeveyn ilişkilerini otomatik oluşturacaktır.
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Çocuğun Adı *</label>
+              <input type="text" id="child-first-name" class="form-control" required placeholder="Örn: Duru">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Soyadı *</label>
+              <input type="text" id="child-last-name" class="form-control" required placeholder="Örn: Kanbur">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Cinsiyet</label>
+              <select id="child-gender" class="form-control">
+                <option value="female">Kız</option>
+                <option value="male">Erkek</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Doğum Tarihi</label>
+              <input type="date" id="child-birth-date" class="form-control">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Anne Seçin</label>
+              <select id="child-mother-select" class="form-control"></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Baba Seçin</label>
+              <select id="child-father-select" class="form-control"></select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Doğum Yeri</label>
+              <input type="text" id="child-birth-place" class="form-control" placeholder="Örn: İstanbul">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Fotoğraf URL</label>
+              <input type="url" id="child-photo-url" class="form-control" placeholder="https://...">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Notlar</label>
+            <textarea id="child-notes" class="form-control" rows="2"></textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="Modal.close('#child-wizard-modal')">İptal</button>
+          <button type="submit" class="btn btn-primary">Çocuğu Kaydet ve Bağla</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 4: RELATIONSHIP MANAGER MODAL -->
+  <div id="relationship-manager-modal" class="modal-backdrop">
+    <div class="modal-window">
+      <div class="modal-header">
+        <div class="modal-title">🔗 Akrabalık İlişkisi Yönetimi</div>
+        <button class="modal-close-btn" onclick="Modal.close('#relationship-manager-modal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="rel-form" onsubmit="Admin.handleSaveRelationship(event)" style="display: flex; flex-direction: column; gap: 14px; background: rgba(10,17,40,0.4); padding: 16px; border-radius: 10px; border: 1px solid var(--gold-border);">
+          <div style="font-weight: 600; color: var(--gold-light); font-size: 14px;">Yeni İlişki Ekle</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">1. Kişi</label>
+              <select id="rel-person1-select" class="form-control" required></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">İlişki Türü</label>
+              <select id="rel-type-select" class="form-control">
+                <option value="parent">1. Kişi -> 2. Kişinin BABA/ANNESİ</option>
+                <option value="spouse">1. Kişi ve 2. Kişi EŞTİR</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">2. Kişi</label>
+            <select id="rel-person2-select" class="form-control" required></select>
+          </div>
+          <button type="submit" class="btn btn-primary">İlişkiyi Oluştur</button>
+        </form>
+
+        <div style="margin-top: 10px;">
+          <div style="font-family: var(--font-heading); font-size: 15px; color: var(--gold-light); margin-bottom: 10px;">Mevcut Bağlı İlişkiler</div>
+          <div id="existing-relationships-list" style="max-height: 250px; overflow-y: auto;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 5: BACKUP & RESTORE MODAL -->
+  <div id="backup-modal" class="modal-backdrop">
+    <div class="modal-window">
+      <div class="modal-header">
+        <div class="modal-title">💾 Veri Yedeği ve Geri Yükleme</div>
+        <button class="modal-close-btn" onclick="Modal.close('#backup-modal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+          <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); padding: 16px; border-radius: 10px;">
+            <h4 style="color: #34d399; margin-bottom: 6px;">📥 JSON Yedeği Alın</h4>
+            <p style="font-size: 13px; color: var(--text-main);">Tüm aile fertlerini ve ilişkileri bilgisayarınıza tek tıklamayla JSON dosyası olarak indirin.</p>
+            <button class="btn btn-primary" style="margin-top: 12px;" onclick="Backup.exportToJson()">JSON Yedeği İndir</button>
+          </div>
+
+          <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); padding: 16px; border-radius: 10px;">
+            <h4 style="color: #fca5a5; margin-bottom: 6px;">📤 JSON'dan Geri Yükle</h4>
+            <p style="font-size: 13px; color: var(--text-main);">Daha önce aldığınız yedek dosyasını seçerek veritabanını güncelleyin.</p>
+            <input type="file" id="backup-file-input" accept=".json" style="display: none;" onchange="Backup.restoreFromFile(this)">
+            <button class="btn btn-danger" style="margin-top: 12px;" onclick="document.getElementById('backup-file-input').click()">Yedek Dosyası Seç ve Yükle</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FIREBASE SDK SCRIPTS (Loaded via official Firebase CDN v8/v9 compat API) -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <!-- APPLICATION MODULE SCRIPTS -->
+  <script src="js/config.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/photos.js"></script>
+  <script src="js/database.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/people.js"></script>
+  <script src="js/relationships.js"></script>
+  <script src="js/tree.js"></script>
+  <script src="js/search.js"></script>
+  <script src="js/admin.js"></script>
+  <script src="js/backup.js"></script>
+  <script src="js/print.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
