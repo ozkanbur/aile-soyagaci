@@ -16,7 +16,7 @@ const Database = {
    * Initialize data provider (Firebase RTDB vs Demo Mode)
    */
   async init() {
-    if (typeof firebase !== 'undefined' && isFirebaseConfigured()) {
+    if (typeof firebase !== 'undefined' && isFirebaseConfigured() && !CONFIG.DEMO_MODE) {
       try {
         if (!firebase.apps.length) {
           firebase.initializeApp(CONFIG.FIREBASE_CONFIG);
@@ -24,13 +24,14 @@ const Database = {
         this.dbRef = firebase.database().ref();
         this.isLiveFirebase = true;
         console.log("🔥 Firebase Realtime Database connected!");
-        
+
         // Listen for realtime updates
         this.dbRef.on('value', (snapshot) => {
           const val = snapshot.val() || {};
           this.cache.people = val.people || {};
           this.cache.relationships = val.relationships || {};
-          console.log("Firebase verisi:", Object.keys(this.cache.people).length, "kişi");
+          console.log("Firebase verisi:", Object.keys(this.cache.people).length, "kişi,",
+            Object.keys(this.cache.relationships).length, "ilişki");
           this.notifyListeners();
         }, (error) => {
           console.error("Firebase okuma hatası:", error);
@@ -38,6 +39,12 @@ const Database = {
             Utils.showToast("Veri okunamadı: " + error.message, 'error');
           }
         });
+        return;
+      } catch (err) {
+        console.warn("Firebase initialization failed, falling back to Demo Mode:", err);
+        this.isLiveFirebase = false;
+      }
+    }
 
     // Demo Mode Fallback (LocalStorage + demo-data.json)
     console.log("ℹ Running in DEMO MODE (Local Storage & Sample Dataset)");
@@ -99,7 +106,7 @@ const Database = {
     if (!personData.id) {
       personData.id = 'person_' + Date.now();
     }
-    
+
     if (this.isLiveFirebase) {
       await this.dbRef.child('people').child(personData.id).set(personData);
     } else {
@@ -122,7 +129,7 @@ const Database = {
 
   async saveRelationship(relData) {
     if (!relData.id) {
-      relData.id = 'rel_' + Date.now();
+      relData.id = 'rel_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
     }
     if (this.isLiveFirebase) {
       await this.dbRef.child('relationships').child(relData.id).set(relData);
