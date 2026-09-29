@@ -9,7 +9,7 @@ const Auth = {
   listeners: [],
 
   init() {
-    if (typeof firebase !== 'undefined' && isFirebaseConfigured() && firebase.auth) {
+    if (Database.isLiveFirebase && typeof firebase !== 'undefined' && firebase.auth) {
       firebase.auth().onAuthStateChanged(user => {
         this.currentUser = user;
         this.notifyListeners();
@@ -40,12 +40,43 @@ const Auth = {
     this.listeners.forEach(cb => cb(this.isAdmin(), this.currentUser));
   },
 
+  /**
+   * Firebase hata kodlarını anlaşılır Türkçe mesaja çevirir
+   */
+  translateError(err) {
+    const code = (err && err.code) || '';
+    const map = {
+      'auth/invalid-credential': 'E-posta veya şifre hatalı (ya da bu kullanıcı bu Firebase projesinde yok).',
+      'auth/invalid-login-credentials': 'E-posta veya şifre hatalı (ya da bu kullanıcı bu Firebase projesinde yok).',
+      'auth/wrong-password': 'Şifre hatalı.',
+      'auth/user-not-found': 'Bu e-posta ile kayıtlı kullanıcı bulunamadı.',
+      'auth/invalid-email': 'E-posta adresi geçersiz biçimde.',
+      'auth/user-disabled': 'Bu kullanıcı devre dışı bırakılmış.',
+      'auth/too-many-requests': 'Çok fazla deneme yapıldı. Biraz bekleyip tekrar deneyin.',
+      'auth/operation-not-allowed': 'Firebase’de Email/Password giriş yöntemi etkin değil.',
+      'auth/network-request-failed': 'Ağ hatası. İnternet bağlantınızı kontrol edin.',
+      'auth/invalid-api-key': 'Firebase API anahtarı geçersiz (config.js kontrol edin).',
+      'auth/api-key-not-valid': 'Firebase API anahtarı geçersiz (config.js kontrol edin).',
+      'auth/unauthorized-domain': 'Bu alan adı Firebase’de yetkili değil. Authentication > Settings > Authorized domains bölümüne ozkanbur.github.io ekleyin.',
+      'auth/configuration-not-found': 'Firebase Authentication henüz başlatılmamış (Get Started).'
+    };
+    const msg = map[code] || (err && err.message) || 'Bilinmeyen hata';
+    return code ? `${msg} [${code}]` : msg;
+  },
+
   async login(email, password) {
-    if (Database.isLiveFirebase && firebase.auth) {
-      const cred = await firebase.auth().signInWithEmailAndPassword(email, password);
-      this.currentUser = cred.user;
-      this.notifyListeners();
-      return cred.user;
+    email = (email || '').trim();
+
+    if (Database.isLiveFirebase && typeof firebase !== 'undefined' && firebase.auth) {
+      try {
+        const cred = await firebase.auth().signInWithEmailAndPassword(email, password);
+        this.currentUser = cred.user;
+        this.notifyListeners();
+        return cred.user;
+      } catch (err) {
+        console.error("Giriş hatası:", err.code, err.message);
+        throw new Error(this.translateError(err));
+      }
     } else {
       // Demo Mode Admin Password Check
       if (password && password.trim().length >= 4) {
