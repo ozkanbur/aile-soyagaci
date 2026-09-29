@@ -11,7 +11,7 @@ const CONFIG = {
   DEFAULT_CENTER_PERSON_ID: "person_006", // Özkan Kanbur in Demo Mode
 
   // Mode Toggle: Set to true if Firebase credentials are missing or for demo testing
-  DEMO_MODE: true,
+  DEMO_MODE: false,
 
   // Firebase Configuration Placeholder
   // BENİM NOTUM: Kendi Firebase projenizi oluşturduğunuzda aşağıdaki bilgileri kendi projenizle değiştirin!
