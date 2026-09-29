@@ -13,6 +13,7 @@
   <!-- Application Stylesheets -->
   <link rel="stylesheet" href="css/variables.css">
   <link rel="stylesheet" href="css/global.css">
+  <link rel="stylesheet" href="css/modal.css">
 
   <style>
     body {
@@ -88,6 +89,24 @@
       cursor: pointer;
       font-size: 14px;
     }
+
+    #login-error {
+      display: none;
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      text-align: left;
+      word-break: break-word;
+    }
+
+    #login-mode {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 12px;
+    }
   </style>
 </head>
 <body>
@@ -100,21 +119,25 @@
     <form class="login-form" onsubmit="handleLogin(event)">
       <div class="form-group">
         <label class="form-label">E-posta Adresi *</label>
-        <input type="email" id="login-email" class="form-control" required placeholder="admin@family.com">
+        <input type="email" id="login-email" class="form-control" required placeholder="admin@family.com" autocomplete="username" autocapitalize="none" autocorrect="off">
       </div>
 
       <div class="form-group">
         <label class="form-label">Yönetici Şifresi *</label>
         <div class="password-wrapper">
-          <input type="password" id="login-password" class="form-control" required placeholder="••••••••">
+          <input type="password" id="login-password" class="form-control" required placeholder="••••••••" autocomplete="current-password">
           <button type="button" class="toggle-pwd-btn" onclick="togglePasswordVisibility()">👁 Göster</button>
         </div>
       </div>
 
-      <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px; padding: 12px;">
+      <div id="login-error"></div>
+
+      <button type="submit" id="login-submit-btn" class="btn btn-primary" style="width: 100%; margin-top: 10px; padding: 12px;">
         🔐 GİRİŞ YAP
       </button>
     </form>
+
+    <div id="login-mode"></div>
 
     <div style="margin-top: 24px; border-top: 1px dashed rgba(255,255,255,0.1); width: 100%; padding-top: 16px;">
       <a href="index.html" class="btn btn-secondary btn-sm" style="width: 100%;">
@@ -141,10 +164,23 @@
       try {
         await Database.init();
         Auth.init();
+        const modeEl = document.getElementById('login-mode');
+        if (Database.isLiveFirebase) {
+          modeEl.innerText = '🔥 Firebase canlı mod (proje: ' + CONFIG.FIREBASE_CONFIG.projectId + ')';
+        } else {
+          modeEl.innerText = '⚡ Demo mod (Firebase bağlanamadı, en az 4 karakterli herhangi bir şifre kabul edilir)';
+        }
       } catch (err) {
         console.error("Başlatma hatası:", err);
+        showLoginError("Başlatma hatası: " + err.message);
       }
     });
+
+    function showLoginError(msg) {
+      const el = document.getElementById('login-error');
+      el.innerText = msg;
+      el.style.display = 'block';
+    }
 
     function togglePasswordVisibility() {
       const pwdInput = document.getElementById('login-password');
@@ -160,20 +196,24 @@
 
     async function handleLogin(e) {
       e.preventDefault();
-      const email = document.getElementById('login-email').value;
+      const email = document.getElementById('login-email').value.trim();
       const password = document.getElementById('login-password').value;
+      const btn = document.getElementById('login-submit-btn');
+      document.getElementById('login-error').style.display = 'none';
 
       if (!email || !password) {
-        Utils.showToast("Lütfen e-posta ve şifrenizi girin.", "error");
+        showLoginError("Lütfen e-posta ve şifrenizi girin.");
         return;
       }
 
+      btn.disabled = true;
       try {
         await Auth.login(email, password);
         Utils.showToast("✓ Giriş başarılı! Yönlendiriliyorsunuz...", "success");
-        setTimeout(() => window.location.href = "index.html", 1000);
+        setTimeout(() => window.location.href = "index.html", 800);
       } catch (err) {
-        Utils.showToast("Giriş Başarısız: " + err.message, "error");
+        showLoginError("Giriş başarısız: " + err.message);
+        btn.disabled = false;
       }
     }
   </script>
