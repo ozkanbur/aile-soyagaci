@@ -1,5 +1,6 @@
 /* ==========================================================================
    DYNAMIC SVG FAMILY TREE RENDERER & ZOOM/PAN ENGINE (tree.js)
+   Pedigree Orthogonal Bus Connector Engine for Ultra-Clean Lines
    ========================================================================== */
 
 const TreeEngine = {
@@ -43,7 +44,6 @@ const TreeEngine = {
 
     // Mouse Pan Events
     this.svgEl.addEventListener('mousedown', (e) => {
-      // Ignore click on person card buttons/chips
       if (e.target.closest('.person-card') || e.target.closest('.control-btn')) return;
       this.isDragging = true;
       this.dragStart = { x: e.clientX - this.panX, y: e.clientY - this.panY };
@@ -110,7 +110,6 @@ const TreeEngine = {
   zoom(factor, mouseX, mouseY) {
     const newScale = Math.min(Math.max(0.3, this.zoomScale * factor), 2.5);
     
-    // Zoom centered on cursor position if coordinates provided
     if (mouseX !== undefined && mouseY !== undefined) {
       const rect = this.svgEl.getBoundingClientRect();
       const cx = mouseX - rect.left;
@@ -152,7 +151,7 @@ const TreeEngine = {
 
     this.centerPersonId = centerPersonId || CONFIG.DEFAULT_CENTER_PERSON_ID;
     if (!peopleDict[this.centerPersonId]) {
-      this.centerPersonId = Object.keys(peopleDict)[0]; // Fallback if ID doesn't exist
+      this.centerPersonId = Object.keys(peopleDict)[0];
     }
 
     // 1. Calculate generation depths relative to center person
@@ -171,7 +170,7 @@ const TreeEngine = {
     const cardW = 220;
     const cardH = 310;
     const xSpacing = 280;
-    const ySpacing = 380;
+    const ySpacing = 390;
 
     const sortedLevels = Object.keys(levelGroups).map(Number).sort((a, b) => a - b);
     
@@ -239,39 +238,131 @@ const TreeEngine = {
       this.nodesGroup.appendChild(fo);
     });
 
-    // 5. Render SVG Connector Lines (Spouses & Parent-Child)
+    // 5. Render SVG Connector Lines (Orthogonal Pedigree Bus Topology)
     this.linesGroup.innerHTML = '';
+
+    // A. Render Spouse Lines & Marriage Junction Nodes
+    const processedSpousePairs = new Set();
     Object.values(relsDict).forEach(rel => {
-      const fromCoord = nodeCoords[rel.from];
-      const toCoord = nodeCoords[rel.to];
-      if (!fromCoord || !toCoord) return;
+      if (rel.type !== 'spouse') return;
+      const p1Coord = nodeCoords[rel.from];
+      const p2Coord = nodeCoords[rel.to];
+      if (!p1Coord || !p2Coord) return;
 
-      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      const pairKey = [rel.from, rel.to].sort().join('_');
+      if (processedSpousePairs.has(pairKey)) return;
+      processedSpousePairs.add(pairKey);
 
-      if (rel.type === 'spouse') {
-        // Horizontal line connecting spouses side-by-side
-        const x1 = fromCoord.x + (cardW / 2);
-        const y1 = fromCoord.y + 70;
-        const x2 = toCoord.x + (cardW / 2);
-        const y2 = toCoord.y + 70;
-        
-        path.setAttribute('d', `M ${x1} ${y1} L ${x2} ${y2}`);
-        path.setAttribute('class', 'tree-connector-line spouse-line');
-      } else if (rel.type === 'parent') {
-        // Curved Vertical Bezier line connecting parent bottom to child top
-        const x1 = fromCoord.x + (cardW / 2);
-        const y1 = fromCoord.y + cardH;
-        const x2 = toCoord.x + (cardW / 2);
-        const y2 = toCoord.y;
+      const leftCoord = p1Coord.x < p2Coord.x ? p1Coord : p2Coord;
+      const rightCoord = p1Coord.x < p2Coord.x ? p2Coord : p1Coord;
 
-        const ctrlY1 = y1 + 80;
-        const ctrlY2 = y2 - 80;
+      const x1 = leftCoord.x + cardW;
+      const y1 = leftCoord.y + 80;
+      const x2 = rightCoord.x;
+      const y2 = rightCoord.y + 80;
 
-        path.setAttribute('d', `M ${x1} ${y1} C ${x1} ${ctrlY1}, ${x2} ${ctrlY2}, ${x2} ${y2}`);
-        path.setAttribute('class', 'tree-connector-line parent-child-line');
+      const spousePath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      spousePath.setAttribute('d', `M ${x1} ${y1} L ${x2} ${y2}`);
+      spousePath.setAttribute('class', 'tree-connector-line spouse-line');
+      this.linesGroup.appendChild(spousePath);
+
+      // Marriage Junction Badge
+      const midX = (x1 + x2) / 2;
+      const midY = (y1 + y2) / 2;
+
+      const ring = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      ring.setAttribute('class', 'spouse-junction-node');
+      ring.innerHTML = `
+        <circle cx="${midX}" cy="${midY}" r="9" fill="#d4af37" stroke="#0a1128" stroke-width="2"/>
+        <text x="${midX}" y="${midY + 3.5}" text-anchor="middle" font-size="9px" fill="#0a1128" font-weight="bold">💍</text>
+      `;
+      this.linesGroup.appendChild(ring);
+    });
+
+    // B. Render Parent-Child Family Trees (Bus Connector Lines)
+    const familyUnits = {};
+
+    Object.keys(peopleDict).forEach(personId => {
+      const parents = Relationships.getParents(personId, peopleDict, relsDict);
+      if (!parents || parents.length === 0) return;
+
+      const parentIds = parents.map(p => p.id).sort().join('_');
+      if (!familyUnits[parentIds]) {
+        familyUnits[parentIds] = {
+          parents: parents,
+          children: []
+        };
+      }
+      familyUnits[parentIds].children.push(personId);
+    });
+
+    Object.values(familyUnits).forEach(unit => {
+      const childrenCoords = unit.children.map(cid => nodeCoords[cid]).filter(Boolean);
+      if (childrenCoords.length === 0) return;
+
+      let trunkStartX = 0;
+      let trunkStartY = 0;
+
+      if (unit.parents.length === 2) {
+        const p1Coord = nodeCoords[unit.parents[0].id];
+        const p2Coord = nodeCoords[unit.parents[1].id];
+        if (p1Coord && p2Coord) {
+          trunkStartX = (p1Coord.x + p2Coord.x + cardW) / 2;
+          trunkStartY = Math.max(p1Coord.y, p2Coord.y) + cardH;
+        } else if (p1Coord || p2Coord) {
+          const pCoord = p1Coord || p2Coord;
+          trunkStartX = pCoord.x + (cardW / 2);
+          trunkStartY = pCoord.y + cardH;
+        }
+      } else if (unit.parents.length === 1) {
+        const pCoord = nodeCoords[unit.parents[0].id];
+        if (pCoord) {
+          trunkStartX = pCoord.x + (cardW / 2);
+          trunkStartY = pCoord.y + cardH;
+        }
       }
 
-      this.linesGroup.appendChild(path);
+      if (!trunkStartX) return;
+
+      const childrenMinY = Math.min(...childrenCoords.map(c => c.y));
+      const busY = trunkStartY + (childrenMinY - trunkStartY) / 2;
+
+      // 1. Vertical Trunk Line from Parent(s) down to Bus Y
+      const trunkPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      trunkPath.setAttribute('d', `M ${trunkStartX} ${trunkStartY} L ${trunkStartX} ${busY}`);
+      trunkPath.setAttribute('class', 'tree-connector-line parent-trunk-line');
+      this.linesGroup.appendChild(trunkPath);
+
+      // 2. Horizontal Bus Bar stretching across children
+      const childXList = childrenCoords.map(c => c.x + (cardW / 2));
+      const minChildX = Math.min(...childXList, trunkStartX);
+      const maxChildX = Math.max(...childXList, trunkStartX);
+
+      const busPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      busPath.setAttribute('d', `M ${minChildX} ${busY} L ${maxChildX} ${busY}`);
+      busPath.setAttribute('class', 'tree-connector-line parent-bus-line');
+      this.linesGroup.appendChild(busPath);
+
+      // 3. Vertical Drop Line from Bus Y down into each child top center
+      childrenCoords.forEach(cCoord => {
+        const childCenterX = cCoord.x + (cardW / 2);
+        const childTopY = cCoord.y;
+
+        const dropPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        dropPath.setAttribute('d', `M ${childCenterX} ${busY} L ${childCenterX} ${childTopY}`);
+        dropPath.setAttribute('class', 'tree-connector-line child-drop-line');
+        this.linesGroup.appendChild(dropPath);
+
+        // Junction dot at child card entry
+        const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        dot.setAttribute('cx', childCenterX);
+        dot.setAttribute('cy', childTopY);
+        dot.setAttribute('r', '4.5');
+        dot.setAttribute('fill', '#3b82f6');
+        dot.setAttribute('stroke', '#ffffff');
+        dot.setAttribute('stroke-width', '1.5');
+        this.linesGroup.appendChild(dot);
+      });
     });
 
     this.recenter();
