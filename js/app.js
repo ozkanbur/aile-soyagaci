@@ -35,16 +35,17 @@ const App = {
       }
     });
 
-    // 4. Initialize Auth & Database
-    Auth.init();
-    await Database.init();
-
-    // 5. Register Data Change Listener
-    Database.onDataChange((people, rels) => {
-      this.updateHeaderStats(people, rels);
-      this.renderTree();
-      this.updateAdminVisibility(Auth.isAdmin());
-    });
+    // 4. Önce Database (Firebase app başlar), sonra Auth
+    try {
+      await Database.init();
+    } catch (err) {
+      console.error("Database başlatma hatası:", err);
+    }
+    try {
+      Auth.init();
+    } catch (err) {
+      console.error("Auth başlatma hatası:", err);
+    }
 
     // 6. Register Auth Listener
     Auth.onAuthStateChanged((isAdmin) => {
