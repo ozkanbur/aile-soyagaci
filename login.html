@@ -5,10 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Yönetici Girişi - Dijital Aile Soyağacı</title>
 
+  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
 
+  <!-- Application Stylesheets -->
   <link rel="stylesheet" href="css/variables.css">
   <link rel="stylesheet" href="css/global.css">
 
@@ -86,17 +88,6 @@
       cursor: pointer;
       font-size: 14px;
     }
-
-    .demo-info-note {
-      background: rgba(234, 179, 8, 0.1);
-      border: 1px solid rgba(234, 179, 8, 0.3);
-      color: #fde047;
-      padding: 10px 14px;
-      border-radius: 8px;
-      font-size: 12px;
-      margin-top: 10px;
-      text-align: center;
-    }
   </style>
 </head>
 <body>
@@ -108,8 +99,8 @@
 
     <form class="login-form" onsubmit="handleLogin(event)">
       <div class="form-group">
-        <label class="form-label">E-posta Adresi (Canlı Mod için)</label>
-        <input type="email" id="login-email" class="form-control" placeholder="admin@family.com">
+        <label class="form-label">E-posta Adresi *</label>
+        <input type="email" id="login-email" class="form-control" required placeholder="admin@family.com">
       </div>
 
       <div class="form-group">
@@ -118,10 +109,6 @@
           <input type="password" id="login-password" class="form-control" required placeholder="••••••••">
           <button type="button" class="toggle-pwd-btn" onclick="togglePasswordVisibility()">👁 Göster</button>
         </div>
-      </div>
-
-      <div class="demo-info-note">
-        ⚡ <strong>Demo Mod Notu:</strong> Firebase canlı veritabanı kurulana kadar herhangi bir test şifresi (örn: <code>123456</code>) yazarak giriş yapabilirsiniz.
       </div>
 
       <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px; padding: 12px;">
@@ -138,18 +125,26 @@
 
   <div id="toast-container"></div>
 
-  <!-- FIREBASE SDK SCRIPTS -->
+  <!-- FIREBASE SDK SCRIPTS (Doğru Sırada Yükleme) -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
+  <!-- APPLICATION MODULES -->
   <script src="js/config.js"></script>
   <script src="js/utils.js"></script>
   <script src="js/database.js"></script>
   <script src="js/auth.js"></script>
 
   <script>
-    Auth.init();
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        await Database.init();
+        Auth.init();
+      } catch (err) {
+        console.error("Başlatma hatası:", err);
+      }
+    });
 
     function togglePasswordVisibility() {
       const pwdInput = document.getElementById('login-password');
@@ -165,12 +160,17 @@
 
     async function handleLogin(e) {
       e.preventDefault();
-      const email = document.getElementById('login-email').value || 'admin@family.com';
+      const email = document.getElementById('login-email').value;
       const password = document.getElementById('login-password').value;
+
+      if (!email || !password) {
+        Utils.showToast("Lütfen e-posta ve şifrenizi girin.", "error");
+        return;
+      }
 
       try {
         await Auth.login(email, password);
-        Utils.showToast("✓ Giriş başarılı! Yönetici paneline yönlendiriliyorsunuz...", "success");
+        Utils.showToast("✓ Giriş başarılı! Yönlendiriliyorsunuz...", "success");
         setTimeout(() => window.location.href = "index.html", 1000);
       } catch (err) {
         Utils.showToast("Giriş Başarısız: " + err.message, "error");
