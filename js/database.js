@@ -30,13 +30,14 @@ const Database = {
           const val = snapshot.val() || {};
           this.cache.people = val.people || {};
           this.cache.relationships = val.relationships || {};
+          console.log("Firebase verisi:", Object.keys(this.cache.people).length, "kişi");
           this.notifyListeners();
+        }, (error) => {
+          console.error("Firebase okuma hatası:", error);
+          if (typeof Utils !== 'undefined') {
+            Utils.showToast("Veri okunamadı: " + error.message, 'error');
+          }
         });
-        return;
-      } catch (err) {
-        console.warn("Firebase initialization failed, falling back to Demo Mode:", err);
-      }
-    }
 
     // Demo Mode Fallback (LocalStorage + demo-data.json)
     console.log("ℹ Running in DEMO MODE (Local Storage & Sample Dataset)");
