@@ -1,9 +1,15 @@
 /* ==========================================================================
    PRINT STYLESHEET & DECORATIVE FAMILY FRAME (print.css)
+   Targeting A4/A3 Landscape Printable Family Archival Documents
    ========================================================================== */
 
+@page {
+  size: A4 landscape;
+  margin: 8mm;
+}
+
 @media print {
-  /* Hide UI Overlays, Headers, Controls, and Navigation */
+  /* Hide Non-Printable UI Overlays & Interactive Buttons */
   .app-header,
   .tree-controls-bar,
   .mobile-bottom-nav,
@@ -11,65 +17,80 @@
   .modal-backdrop,
   #toast-container,
   button,
-  .btn {
+  .btn,
+  .search-icon,
+  .card-relation-counts {
     display: none !important;
   }
 
-  /* Reset Body for Paper */
+  /* Page Reset for High Quality Printing */
   html, body {
     width: 100% !important;
-    height: auto !important;
+    height: 100% !important;
     background: #ffffff !important;
-    color: #000000 !important;
+    color: #0b132b !important;
     overflow: visible !important;
-    font-size: 12pt !important;
+    font-size: 11pt !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
   .tree-view-wrapper {
     position: relative !important;
     top: 0 !important;
     left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
     width: 100% !important;
     height: auto !important;
+    min-height: 500px !important;
+    overflow: visible !important;
+    background: transparent !important;
+  }
+
+  #tree-canvas-svg {
+    width: 100% !important;
+    height: auto !important;
+    max-height: 800px !important;
     overflow: visible !important;
   }
 
-  /* Ornate Decorative Family Border Frame */
+  /* Ornate Decorative Printable Family Frame */
   .print-family-frame {
     display: block !important;
-    border: 8px double #1a237e;
-    padding: 24px;
-    margin: 10px;
+    border: 6px double #1e3a8a;
+    padding: 16px 24px;
+    margin: 0 0 16px 0;
     position: relative;
     background: #ffffff;
     box-shadow: none !important;
+    border-radius: 8px;
   }
 
   .print-header-banner {
     text-align: center;
-    margin-bottom: 24px;
-    border-bottom: 2px solid #1a237e;
-    padding-bottom: 12px;
+    border-bottom: 2px solid #1e3a8a;
+    padding-bottom: 8px;
   }
 
   .print-header-banner h1 {
     font-family: var(--font-heading), 'Cinzel', serif;
-    font-size: 26pt;
-    color: #0d47a1;
-    margin-bottom: 4px;
+    font-size: 22pt;
+    color: #1e3a8a;
+    margin: 0 0 4px 0;
     text-transform: uppercase;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.08em;
   }
 
   .print-header-banner .print-subtitle {
-    font-size: 12pt;
-    color: #555555;
+    font-size: 11pt;
+    color: #475569;
     font-style: italic;
   }
 
-  /* Person Cards Print View Optimization */
+  /* Person Cards High Contrast Print Styles */
   .person-card {
-    border: 1.5px solid #1a237e !important;
+    border: 1.5px solid #1e3a8a !important;
     background: #f8fafc !important;
     color: #0f172a !important;
     box-shadow: none !important;
@@ -78,19 +99,56 @@
     transform: none !important;
   }
 
+  .person-card.is-center {
+    border: 2.5px solid #d4af37 !important;
+    background: #fefce8 !important;
+  }
+
   .card-full-name {
-    color: #0d47a1 !important;
+    color: #1e3a8a !important;
   }
 
   .card-generation-badge {
-    background: #1a237e !important;
+    background: #1e3a8a !important;
     color: #ffffff !important;
+    border: none !important;
   }
 
+  .card-status-badge.living {
+    background: #dcfce7 !important;
+    color: #15803d !important;
+    border: 1px solid #86efac !important;
+  }
+
+  .card-status-badge.deceased {
+    background: #f3f4f6 !important;
+    color: #4b5563 !important;
+    border: 1px solid #d1d5db !important;
+  }
+
+  .avatar-fallback {
+    background: #e2e8f0 !important;
+    color: #1e3a8a !important;
+  }
+
+  /* Connector Lines High Contrast Print Colors */
   .tree-connector-line {
-    stroke: #1a237e !important;
-    stroke-width: 2px !important;
-    stroke-dasharray: none !important;
+    stroke-width: 2.5px !important;
+  }
+
+  .tree-connector-line.spouse-line {
+    stroke: #b45309 !important; /* Rich amber gold */
+  }
+
+  .tree-connector-line.parent-trunk-line,
+  .tree-connector-line.parent-bus-line,
+  .tree-connector-line.child-drop-line {
+    stroke: #1d4ed8 !important; /* Deep blue */
+  }
+
+  .spouse-junction-node circle {
+    fill: #b45309 !important;
+    stroke: #ffffff !important;
   }
 }
 

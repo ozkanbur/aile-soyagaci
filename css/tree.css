@@ -24,26 +24,36 @@
   cursor: grabbing;
 }
 
-/* Connector Lines Styling */
+/* Connector Lines Styling - Pedigree Bus Topology */
 .tree-connector-line {
   fill: none;
-  stroke: rgba(212, 175, 55, 0.45);
-  stroke-width: 2px;
-  stroke-dasharray: 4;
-  animation: dashAnimation 30s linear infinite;
   transition: stroke var(--transition-normal), stroke-width var(--transition-normal);
 }
 
 .tree-connector-line.spouse-line {
-  stroke: rgba(236, 72, 153, 0.6);
+  stroke: var(--gold-primary);
   stroke-width: 2.5px;
   stroke-dasharray: none;
 }
 
-.tree-connector-line.parent-child-line {
-  stroke: rgba(59, 130, 246, 0.6);
-  stroke-width: 2px;
-  stroke-dasharray: none;
+.tree-connector-line.parent-trunk-line {
+  stroke: var(--gold-light);
+  stroke-width: 2.5px;
+}
+
+.tree-connector-line.parent-bus-line {
+  stroke: #3b82f6;
+  stroke-width: 2.5px;
+}
+
+.tree-connector-line.child-drop-line {
+  stroke: #3b82f6;
+  stroke-width: 2.5px;
+}
+
+.spouse-junction-node {
+  cursor: pointer;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
 }
 
 /* Floating Zoom & Pan Control Bar */
@@ -83,20 +93,4 @@
   background: var(--gold-gradient);
   color: var(--text-inverse);
   box-shadow: var(--shadow-gold);
-}
-
-/* Generation Level Indicator Headers */
-.generation-strip {
-  position: absolute;
-  left: 20px;
-  z-index: 5;
-  background: rgba(10, 17, 40, 0.7);
-  border-left: 3px solid var(--gold-primary);
-  padding: 4px 12px;
-  border-radius: 0 8px 8px 0;
-  color: var(--gold-light);
-  font-family: var(--font-heading);
-  font-size: 11px;
-  letter-spacing: 0.1em;
-  pointer-events: none;
 }
