@@ -5,12 +5,14 @@
 
 const Admin = {
   activePersonId: null,
+  pendingSpouseOf: null,
 
   /**
    * Open modal to add a new person
    */
   openAddPersonModal() {
     this.activePersonId = null;
+    this.pendingSpouseOf = null;
     const form = document.getElementById('person-form');
     if (form) form.reset();
     
@@ -28,6 +30,7 @@ const Admin = {
     if (!person) return;
 
     this.activePersonId = personId;
+    this.pendingSpouseOf = null;
     document.getElementById('modal-person-title').innerText = "Birey Bilgilerini Düzenle";
     document.getElementById('form-person-id').value = person.id;
     document.getElementById('form-first-name').value = person.firstName || "";
@@ -75,8 +78,15 @@ const Admin = {
     try {
       const savedId = await Database.savePerson(cleanedPerson);
       Utils.showToast("✓ Kişi bilgileri başarıyla kaydedildi.", 'success');
+      let focusId = savedId;
+      if (this.pendingSpouseOf && !rawData.id) {
+        await Database.saveRelationship({ type: 'spouse', from: this.pendingSpouseOf, to: savedId });
+        focusId = this.pendingSpouseOf;
+        Utils.showToast("✓ Eş eklendi ve eşleştirildi.", 'success');
+      }
+      this.pendingSpouseOf = null;
       Modal.close('#person-edit-modal');
-      App.setCenterPerson(savedId);
+      App.setCenterPerson(focusId);
     } catch (err) {
       Utils.showToast("Kayıt sırasında hata oluştu: " + err.message, 'error');
     }
@@ -109,7 +119,7 @@ const Admin = {
   /**
    * Open "+ YENİ ÇOCUK" Fast Workflow Wizard
    */
-  openNewChildWizard() {
+  openNewChildWizard(parentId) {
     const form = document.getElementById('child-form');
     if (form) form.reset();
 
@@ -125,6 +135,19 @@ const Admin = {
       if (p.gender === 'female') motherSelect.innerHTML += opt;
       else fatherSelect.innerHTML += opt;
     });
+
+    // Bir kişinin kartından açıldıysa anne/baba ve soyadı otomatik seçilsin
+    if (parentId && Database.cache.people[parentId]) {
+      const people = Database.cache.people;
+      const rels = Database.cache.relationships;
+      const parent = people[parentId];
+      const spouses = Relationships.getSpouses(parentId, people, rels);
+      const mother = parent.gender === 'female' ? parent : spouses.find(x => x.gender === 'female');
+      const father = parent.gender !== 'female' ? parent : spouses.find(x => x.gender !== 'female');
+      if (mother) motherSelect.value = mother.id;
+      if (father) fatherSelect.value = father.id;
+      document.getElementById('child-last-name').value = (father || parent).lastName || '';
+    }
 
     Modal.open('#child-wizard-modal');
   },
@@ -217,7 +240,7 @@ const Admin = {
       return;
     }
 
-    const check = Relationships.validate(p1Id, p2Id, relType, Database.cache.relationships);
+    const check = Relationships.validate(p1Id, p2Id, relType, Database.cache.relationships, Database.cache.people);
     if (!check.isValid) {
       Utils.showToast(check.message, 'error');
       return;
@@ -275,5 +298,69 @@ const Admin = {
       Utils.showToast("✓ İlişki silindi.", 'success');
       this.renderExistingRelationshipsList();
     }
+  },
+  /**
+   * Bir kişi için eş ekleme (kartın içinden)
+   */
+  openAddSpouseModal(personId) {
+    const person = Database.cache.people[personId];
+    if (!person) return;
+    this.openAddPersonModal();
+    this.pendingSpouseOf = personId;
+    document.getElementById('modal-person-title').innerText = `${person.firstName} ${person.lastName} için Eş Ekle`;
+    document.getElementById('form-gender').value = person.gender === 'female' ? 'male' : 'female';
+  },
+
+  /**
+   * Veri Sağlık Kontrolü
+   */
+  openDataCheckModal() {
+    this.renderDataCheck();
+    Modal.open('#data-check-modal');
+  },
+
+  renderDataCheck() {
+    const box = document.getElementById('data-check-list');
+    if (!box) return;
+    const centerId = App.currentCenterPersonId || CONFIG.DEFAULT_CENTER_PERSON_ID;
+    const problems = Relationships.findProblems(Database.cache.people, Database.cache.relationships, centerId);
+
+    if (!problems.length) {
+      box.innerHTML = '<div style="color:#34d399; font-size:14px;">✓ Sorun bulunamadı. Tüm ilişkiler tutarlı görünüyor.</div>';
+      return;
+    }
+
+    box.innerHTML = problems.map(pr => {
+      const color = pr.level === 'error' ? '#fca5a5' : '#fde047';
+      const icon = pr.level === 'error' ? '⛔' : '⚠️';
+      const buttons = pr.relId ? `
+        <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
+          ${pr.type === 'parent' ? `<button class="btn btn-secondary btn-sm" onclick="Admin.fixRelationship('${pr.relId}','swap')">🔁 Yönü Çevir</button>` : ''}
+          <button class="btn btn-danger btn-sm" onclick="Admin.fixRelationship('${pr.relId}','delete')">🗑️ Bağlantıyı Sil</button>
+        </div>` : '';
+      return `
+        <div style="background: rgba(10,17,40,0.5); border:1px solid rgba(255,255,255,0.1); border-left:4px solid ${color}; border-radius:8px; padding:10px 14px; margin-bottom:8px; font-size:13px;">
+          <div>${icon} ${Utils.escapeHtml(pr.message)}</div>
+          ${buttons}
+        </div>`;
+    }).join('');
+  },
+
+  async fixRelationship(relId, action) {
+    const rel = Database.cache.relationships[relId];
+    if (!rel) return;
+    try {
+      if (action === 'swap') {
+        await Database.saveRelationship({ id: rel.id, type: rel.type, from: rel.to, to: rel.from });
+        Utils.showToast("✓ Yön çevrildi.", 'success');
+      } else if (action === 'delete') {
+        if (!confirm("Bu bağlantıyı silmek istediğinize emin misiniz?")) return;
+        await Database.deleteRelationship(relId);
+        Utils.showToast("✓ Bağlantı silindi.", 'success');
+      }
+    } catch (err) {
+      Utils.showToast("İşlem hatası: " + err.message, 'error');
+    }
+    this.renderDataCheck();
   }
 };

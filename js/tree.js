@@ -20,6 +20,94 @@ const TreeEngine = {
   touchStartDist: 0,
   touchStartScale: 1,
 
+  // Dal katlama durumu
+  collapsed: new Set(),
+  hasRendered: false,
+
+  loadCollapsed() {
+    try {
+      const raw = localStorage.getItem('family_tree_collapsed');
+      if (raw) this.collapsed = new Set(JSON.parse(raw));
+    } catch (e) {}
+  },
+
+  saveCollapsed() {
+    try {
+      localStorage.setItem('family_tree_collapsed', JSON.stringify(Array.from(this.collapsed)));
+    } catch (e) {}
+  },
+
+  /** Bir kişinin altındaki dal: soyundan gelenler + onların eşleri */
+  branchMembers(pid, peopleDict, relsDict) {
+    const desc = Relationships.getDescendantIds(pid, relsDict);
+    const out = new Set(desc);
+    desc.forEach(d => {
+      Relationships.getSpouses(d, peopleDict, relsDict).forEach(sp => out.add(sp.id));
+    });
+    return out;
+  },
+
+  /** Katlanmış dalların gizlediği kişiler */
+  computeHidden(peopleDict, relsDict) {
+    const hidden = new Set();
+    this.collapsed.forEach(cid => {
+      if (!peopleDict[cid]) return;
+      const keep = new Set([cid]);
+      Relationships.getSpouses(cid, peopleDict, relsDict).forEach(sp => keep.add(sp.id));
+      this.branchMembers(cid, peopleDict, relsDict).forEach(id => {
+        if (!keep.has(id)) hidden.add(id);
+      });
+    });
+    return hidden;
+  },
+
+  toggleBranch(pid) {
+    const people = Database.cache.people;
+    const rels = Database.cache.relationships;
+    const group = [pid].concat(Relationships.getSpouses(pid, people, rels).map(x => x.id));
+    if (this.collapsed.has(pid)) group.forEach(id => this.collapsed.delete(id));
+    else group.forEach(id => this.collapsed.add(id));
+    this.saveCollapsed();
+    App.renderTree({ keepView: true });
+  },
+
+  /** Belirli bir kişiyi gizleyen dalları aç (arama / merkeze alma için) */
+  revealPerson(personId, peopleDict, relsDict) {
+    let changed = false;
+    Array.from(this.collapsed).forEach(cid => {
+      if (this.branchMembers(cid, peopleDict, relsDict).has(personId)) {
+        this.collapsed.delete(cid);
+        changed = true;
+      }
+    });
+    if (changed) this.saveCollapsed();
+  },
+
+  /** En üst kuşak ve çocukları açık, daha alttaki dallar kapalı */
+  collapseAll() {
+    const people = Database.cache.people;
+    const rels = Database.cache.relationships;
+    const levels = Relationships.calculateGenerations(this.centerPersonId || CONFIG.DEFAULT_CENTER_PERSON_ID, people, rels);
+    const vals = Object.values(levels);
+    if (!vals.length) return;
+    const minLevel = Math.min(...vals);
+    this.collapsed = new Set();
+    Object.keys(people).forEach(pid => {
+      const lvl = levels[pid] !== undefined ? levels[pid] : 0;
+      if (lvl > minLevel && Relationships.getChildren(pid, people, rels).length > 0) {
+        this.collapsed.add(pid);
+      }
+    });
+    this.saveCollapsed();
+    App.renderTree();
+  },
+
+  expandAll() {
+    this.collapsed = new Set();
+    this.saveCollapsed();
+    App.renderTree();
+  },
+
   init(svgSelector) {
     this.svgEl = document.querySelector(svgSelector);
     if (!this.svgEl) return;
@@ -36,6 +124,7 @@ const TreeEngine = {
     this.linesGroup = document.getElementById('lines-group');
     this.nodesGroup = document.getElementById('nodes-group');
 
+    this.loadCollapsed();
     this.bindEvents();
   },
 
@@ -146,7 +235,7 @@ const TreeEngine = {
   /**
    * Main Tree Rendering Function
    */
-  render(centerPersonId, peopleDict, relsDict) {
+  render(centerPersonId, peopleDict, relsDict, opts = {}) {
     if (!this.svgEl || !peopleDict || Object.keys(peopleDict).length === 0) return;
 
     this.centerPersonId = centerPersonId || CONFIG.DEFAULT_CENTER_PERSON_ID;
@@ -157,9 +246,18 @@ const TreeEngine = {
     // 1. Calculate generation depths relative to center person
     const genLevels = Relationships.calculateGenerations(this.centerPersonId, peopleDict, relsDict);
     
+    // Katlanmış dalları gizle (merkez kişi her zaman görünür)
+    const hiddenSet = this.computeHidden(peopleDict, relsDict);
+    hiddenSet.delete(this.centerPersonId);
+    const visibleIds = Object.keys(peopleDict).filter(pid => !hiddenSet.has(pid));
+
+    // Akrabalık adları ("Ben kimim?" seçimine göre)
+    const meId = (typeof Kinship !== 'undefined') ? Kinship.getMeId(peopleDict) : null;
+    const kinMap = meId ? Kinship.computeAll(meId, peopleDict, relsDict) : {};
+
     // 2. Group people by generation level
     const levelGroups = {};
-    Object.keys(peopleDict).forEach(pid => {
+    visibleIds.forEach(pid => {
       const lvl = genLevels[pid] !== undefined ? genLevels[pid] : 0;
       if (!levelGroups[lvl]) levelGroups[lvl] = [];
       levelGroups[lvl].push(peopleDict[pid]);
@@ -208,8 +306,23 @@ const TreeEngine = {
         ? `<img class="card-photo" src="${person.photoUrl}" alt="${Utils.escapeHtml(person.firstName)}" onerror="Photos.handleImageError(this, '${person.firstName}', '${person.lastName}', '${person.gender}')">`
         : Photos.getPlaceholderSvg(person.firstName, person.lastName, person.gender);
 
+      const kinLabel = kinMap[pid] || '';
+      const childCount = Relationships.getChildren(person.id, peopleDict, relsDict).length;
+      const isCollapsed = this.collapsed.has(pid);
+      let branchHtml = '';
+      if (childCount > 0) {
+        const famKeep = new Set([pid]);
+        Relationships.getSpouses(pid, peopleDict, relsDict).forEach(sp => famKeep.add(sp.id));
+        let branchSize = 0;
+        this.branchMembers(pid, peopleDict, relsDict).forEach(id => { if (!famKeep.has(id)) branchSize++; });
+        branchHtml = `<div class="card-branch-toggle ${isCollapsed ? 'is-collapsed' : ''}"
+            onclick="event.stopPropagation(); TreeEngine.toggleBranch('${person.id}')">
+            ${isCollapsed ? `▸ Dalı aç (+${branchSize} kişi)` : `▾ Dalı katla (${branchSize} kişi)`}
+          </div>`;
+      }
+
       fo.innerHTML = `
-        <div class="person-card ${person.gender} ${isCenter ? 'is-center' : ''}" onclick="App.onCardClick('${person.id}')">
+        <div class="person-card ${person.gender} ${isCenter ? 'is-center' : ''} ${childCount > 0 ? 'has-branch' : ''}" onclick="App.onCardClick('${person.id}')">
           <div class="card-generation-badge">${romanGen}</div>
           <div class="card-status-badge ${isDeceased ? 'deceased' : 'living'}">
             ${isDeceased ? '🕊️ Vefat' : '🟢 Yaşıyor'}
@@ -225,13 +338,15 @@ const TreeEngine = {
           </div>
 
           <div class="card-dates">${lifeSpan}</div>
+          ${kinLabel ? `<div class="card-kinship ${pid === meId ? 'is-me' : ''}">${Utils.escapeHtml(kinLabel)}</div>` : ''}
           <div class="card-divider"></div>
 
           <div class="card-relation-counts">
             <div class="count-chip"><span>${Relationships.getParents(person.id, peopleDict, relsDict).length}</span>Anne/Baba</div>
             <div class="count-chip"><span>${Relationships.getSpouses(person.id, peopleDict, relsDict).length}</span>Eş</div>
-            <div class="count-chip"><span>${Relationships.getChildren(person.id, peopleDict, relsDict).length}</span>Çocuk</div>
+            <div class="count-chip"><span>${childCount}</span>Çocuk</div>
           </div>
+          ${branchHtml}
         </div>
       `;
 
@@ -282,7 +397,7 @@ const TreeEngine = {
     // B. Render Parent-Child Family Trees (Bus Connector Lines)
     const familyUnits = {};
 
-    Object.keys(peopleDict).forEach(personId => {
+    visibleIds.forEach(personId => {
       const parents = Relationships.getParents(personId, peopleDict, relsDict);
       if (!parents || parents.length === 0) return;
 
@@ -300,29 +415,12 @@ const TreeEngine = {
       const childrenCoords = unit.children.map(cid => nodeCoords[cid]).filter(Boolean);
       if (childrenCoords.length === 0) return;
 
-      let trunkStartX = 0;
-      let trunkStartY = 0;
+      // Kaç ebeveyn olursa olsun (1, 2 veya daha fazla) gövde çizgisini ortalayarak çiz
+      const parentCoords = unit.parents.map(p => nodeCoords[p.id]).filter(Boolean);
+      if (parentCoords.length === 0) return;
 
-      if (unit.parents.length === 2) {
-        const p1Coord = nodeCoords[unit.parents[0].id];
-        const p2Coord = nodeCoords[unit.parents[1].id];
-        if (p1Coord && p2Coord) {
-          trunkStartX = (p1Coord.x + p2Coord.x + cardW) / 2;
-          trunkStartY = Math.max(p1Coord.y, p2Coord.y) + cardH;
-        } else if (p1Coord || p2Coord) {
-          const pCoord = p1Coord || p2Coord;
-          trunkStartX = pCoord.x + (cardW / 2);
-          trunkStartY = pCoord.y + cardH;
-        }
-      } else if (unit.parents.length === 1) {
-        const pCoord = nodeCoords[unit.parents[0].id];
-        if (pCoord) {
-          trunkStartX = pCoord.x + (cardW / 2);
-          trunkStartY = pCoord.y + cardH;
-        }
-      }
-
-      if (!trunkStartX) return;
+      const trunkStartX = parentCoords.reduce((sum, c) => sum + c.x + (cardW / 2), 0) / parentCoords.length;
+      const trunkStartY = Math.max(...parentCoords.map(c => c.y)) + cardH;
 
       const childrenMinY = Math.min(...childrenCoords.map(c => c.y));
       const busY = trunkStartY + (childrenMinY - trunkStartY) / 2;
@@ -365,6 +463,7 @@ const TreeEngine = {
       });
     });
 
-    this.recenter();
+    if (!opts.keepView) this.recenter();
+    this.hasRendered = true;
   }
 };

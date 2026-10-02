@@ -58,8 +58,14 @@ const App = {
     // 5. Register Data Change Listener
     Database.onDataChange((people, rels) => {
       this.updateHeaderStats(people, rels);
-      this.renderTree();
+      // Veri güncellenince görünüm sıçramasın (ilk çizim hariç)
+      this.renderTree({ keepView: TreeEngine.hasRendered });
       this.updateAdminVisibility(Auth.isAdmin());
+      Kinship.updateButtons();
+      if (!this._mePromptChecked && Object.keys(people || {}).length > 0) {
+        this._mePromptChecked = true;
+        Kinship.maybePrompt();
+      }
     });
 
     // 6. Register Auth Listener
@@ -72,6 +78,8 @@ const App = {
   },
 
   setCenterPerson(personId) {
+    // Bu kişiyi gizleyen katlanmış dal varsa aç
+    TreeEngine.revealPerson(personId, Database.cache.people, Database.cache.relationships);
     this.currentCenterPersonId = personId;
     this.renderTree();
     TreeEngine.recenter();
@@ -85,11 +93,12 @@ const App = {
     this.openPersonDetailModal(personId);
   },
 
-  renderTree() {
+  renderTree(opts) {
     TreeEngine.render(
       this.currentCenterPersonId || CONFIG.DEFAULT_CENTER_PERSON_ID,
       Database.cache.people,
-      Database.cache.relationships
+      Database.cache.relationships,
+      opts || {}
     );
   },
 
@@ -164,6 +173,9 @@ const App = {
     const children = Relationships.getChildren(personId, Database.cache.people, Database.cache.relationships);
     const siblings = Relationships.getSiblings(personId, Database.cache.people, Database.cache.relationships);
 
+    const meId = Kinship.getMeId(Database.cache.people);
+    const kinLabel = meId ? Kinship.labelFor(meId, personId, Database.cache.people, Database.cache.relationships) : '';
+
     const isDeceased = !!person.deathDate;
     const age = Utils.calculateAge(person.birthDate, person.deathDate);
     const lifeSpanStr = Utils.getLifeSpan(person.birthDate, person.deathDate);
@@ -190,6 +202,7 @@ const App = {
         <div class="profile-main-info">
           <div class="profile-name">${Utils.escapeHtml(person.firstName)} ${Utils.escapeHtml(person.lastName)}</div>
           ${person.nickname ? `<div style="color: var(--gold-light); font-style: italic; font-size: 13px;">"${Utils.escapeHtml(person.nickname)}"</div>` : ''}
+          ${kinLabel ? `<div style="margin-top:4px; font-size:13px; color: var(--gold-light);">🧭 Sana göre: <b>${Utils.escapeHtml(kinLabel)}</b></div>` : ''}
           <div style="margin-top: 4px; font-size: 13px; font-weight: 600; color: ${isDeceased ? 'var(--deceased-indicator)' : 'var(--living-indicator)'}">
             ${isDeceased ? '🕊️ Vefat Etmiş' : '🟢 Hayatta'} ${age !== null ? `(${age} yaşında)` : ''}
           </div>
@@ -201,6 +214,12 @@ const App = {
             ${Auth.isAdmin() ? `
               <button class="btn btn-secondary btn-sm" onclick="Modal.close('#person-detail-modal'); Admin.openEditPersonModal('${person.id}');">
                 ✏️ Düzenle
+              </button>
+              <button class="btn btn-secondary btn-sm" onclick="Modal.close('#person-detail-modal'); Admin.openAddSpouseModal('${person.id}');">
+                💍 Eş Ekle
+              </button>
+              <button class="btn btn-secondary btn-sm" onclick="Modal.close('#person-detail-modal'); Admin.openNewChildWizard('${person.id}');">
+                👶 Çocuk Ekle
               </button>
               <button class="btn btn-danger btn-sm" onclick="Admin.confirmDeletePerson('${person.id}');">
                 🗑️ Sil
