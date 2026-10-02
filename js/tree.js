@@ -233,6 +233,178 @@ const TreeEngine = {
   },
 
   /**
+   * AİLE DÜZENİ: kartların X konumlarını hesaplar (Y, kuşak seviyesinden gelir).
+   * - Eşler ve ortak çocuk ebeveynleri bir "birim" olarak yan yana durur
+   * - Çocuklar ebeveyn biriminin ALTINDA, yaşa göre soldan sağa (büyük solda) dizilir
+   * - Her dal kendi genişliğini alır; kardeşlerin dalları birbirine girmez
+   * - Dışarıdan gelen (eş) kişi, kan bağı olan kişinin yanına yerleşir
+   * Dönüş: { personId: x }  (kartın SOL kenarı; merkez kişi x=0 olacak şekilde kaydırılır)
+   */
+  layoutFamilies(visibleIds, peopleDict, relsDict, genLevels, centerId, cardW) {
+    const SPOUSE_GAP = 50;     // aynı birimdeki kartlar arası
+    const SUBTREE_GAP = 110;   // kardeş dalları arası
+    const ROOT_GAP = 220;      // birbirinden bağımsız aile ağaçları arası
+    const visible = new Set(visibleIds);
+    const lvl = id => (genLevels[id] !== undefined ? genLevels[id] : 0);
+    const birthKey = id => {
+      const b = peopleDict[id] && peopleDict[id].birthDate;
+      return b ? b : '9999-99-99';
+    };
+    const cmpBirth = (a, b) => birthKey(a).localeCompare(birthKey(b)) || a.localeCompare(b);
+
+    // --- 1) İlişki haritaları
+    const parentsOf = {}, childrenOf = {}, spousesOf = {};
+    visibleIds.forEach(id => { parentsOf[id] = []; childrenOf[id] = []; spousesOf[id] = []; });
+    Object.values(relsDict).forEach(r => {
+      if (!visible.has(r.from) || !visible.has(r.to)) return;
+      if (r.type === 'parent') {
+        if (!parentsOf[r.to].includes(r.from)) parentsOf[r.to].push(r.from);
+        if (!childrenOf[r.from].includes(r.to)) childrenOf[r.from].push(r.to);
+      } else if (r.type === 'spouse') {
+        if (!spousesOf[r.from].includes(r.to)) spousesOf[r.from].push(r.to);
+        if (!spousesOf[r.to].includes(r.from)) spousesOf[r.to].push(r.from);
+      }
+    });
+
+    // --- 2) Birimler (eşler + ortak çocuk ebeveynleri) - union/find
+    const uf = {};
+    visibleIds.forEach(id => { uf[id] = id; });
+    const find = x => { while (uf[x] !== x) { uf[x] = uf[uf[x]]; x = uf[x]; } return x; };
+    const union = (a, b) => { const ra = find(a), rb = find(b); if (ra !== rb) uf[rb] = ra; };
+    visibleIds.forEach(id => {
+      spousesOf[id].forEach(sp => union(id, sp));
+      const ps = parentsOf[id];
+      for (let i = 1; i < ps.length; i++) union(ps[0], ps[i]);
+    });
+
+    const units = {};          // unitId -> { id, members[], level, rank }
+    visibleIds.forEach(id => {
+      const u = find(id);
+      if (!units[u]) units[u] = { id: u, members: [] };
+      units[u].members.push(id);
+    });
+    const unitOf = id => find(id);
+    const unitList = Object.values(units);
+
+    unitList.forEach(u => {
+      u.level = Math.min(...u.members.map(lvl));
+      u.birth = u.members.map(birthKey).sort()[0];
+    });
+    unitList.sort((a, b) => (a.level - b.level) || a.birth.localeCompare(b.birth) || a.id.localeCompare(b.id));
+    unitList.forEach((u, i) => { u.rank = i; });
+
+    // --- 3) Ağaç ebeveyni: her birim, kendisinden önce gelen en üstteki ebeveyn birimine asılır
+    const treeParent = {};
+    unitList.forEach(u => {
+      let best = null, anchor = null;
+      u.members.slice().sort(cmpBirth).forEach(m => {
+        parentsOf[m].forEach(p => {
+          const pu = units[unitOf(p)];
+          if (!pu || pu === u || pu.rank >= u.rank) return;
+          if (!best || pu.rank < best.rank) { best = pu; anchor = m; }
+        });
+      });
+      u.treeParent = best ? best.id : null;
+      u.anchor = anchor;
+    });
+
+    // --- 4) Birim içi sıralama (çapa = ebeveynine bağlı kan bağı olan kişi)
+    unitList.forEach(u => {
+      const m = u.members;
+      if (m.length === 1) { u.order = m; return; }
+      if (m.length === 2) {
+        if (u.anchor) {
+          u.order = [u.anchor, m.find(x => x !== u.anchor)];
+        } else {
+          // Kök birim: erkek solda, kadın sağda
+          const sorted = m.slice().sort((a, b) => {
+            const ga = peopleDict[a].gender === 'female' ? 1 : 0;
+            const gb = peopleDict[b].gender === 'female' ? 1 : 0;
+            return (ga - gb) || cmpBirth(a, b);
+          });
+          u.order = sorted;
+        }
+        return;
+      }
+      // 3+ kişi: en çok eşi olan ortada, diğerleri iki yana
+      const center = (u.anchor && spousesOf[u.anchor].length >= 2)
+        ? u.anchor
+        : m.slice().sort((a, b) => spousesOf[b].length - spousesOf[a].length || cmpBirth(a, b))[0];
+      const others = m.filter(x => x !== center).sort(cmpBirth);
+      const left = [], right = [];
+      others.forEach((x, i) => (i % 2 === 0 ? left : right).push(x));
+      u.order = left.reverse().concat([center], right);
+    });
+    const unitW = u => u.order.length * cardW + (u.order.length - 1) * SPOUSE_GAP;
+
+    // --- 5) Ağaç çocukları (yaşa göre sıralı)
+    unitList.forEach(u => { u.kids = []; });
+    unitList.forEach(u => {
+      if (u.treeParent) units[u.treeParent].kids.push(u);
+    });
+    unitList.forEach(u => {
+      u.kids.sort((a, b) => cmpBirth(a.anchor, b.anchor));
+    });
+
+    // --- 6) 1. geçiş: dal genişlikleri ve birim merkezleri
+    const anchorOffset = u => {
+      const idx = u.anchor ? u.order.indexOf(u.anchor) : 0;
+      return idx * (cardW + SPOUSE_GAP) + cardW / 2;
+    };
+    const measure = u => {
+      u.kids.forEach(measure);
+      const w = unitW(u);
+      if (!u.kids.length) { u.w = w; u.uc = w / 2; u.childLeft = []; return; }
+
+      let cursor = 0;
+      const lefts = [];
+      let aMin = Infinity, aMax = -Infinity;
+      u.kids.forEach(k => {
+        lefts.push(cursor);
+        const ax = cursor + (k.uc - unitW(k) / 2) + anchorOffset(k);
+        aMin = Math.min(aMin, ax);
+        aMax = Math.max(aMax, ax);
+        cursor += k.w + SUBTREE_GAP;
+      });
+      const blockW = cursor - SUBTREE_GAP;
+      const pc = (aMin + aMax) / 2;               // ebeveyn merkezi = çocukların bağ çizgisi ortası
+      const uLeft = pc - w / 2, uRight = pc + w / 2;
+      const left = Math.min(0, uLeft), right = Math.max(blockW, uRight);
+      const shift = -left;
+      u.w = right - left;
+      u.uc = pc + shift;
+      u.childLeft = lefts.map(l => l + shift);
+    };
+
+    // --- 7) 2. geçiş: mutlak konumlar
+    const xs = {};
+    const assign = (u, left) => {
+      const ucAbs = left + u.uc;
+      const unitLeft = ucAbs - unitW(u) / 2;
+      u.order.forEach((id, i) => { xs[id] = unitLeft + i * (cardW + SPOUSE_GAP); });
+      u.kids.forEach((k, i) => assign(k, left + u.childLeft[i]));
+    };
+
+    // Köklerin boyutu (en büyük ağaç solda)
+    const roots = unitList.filter(u => !u.treeParent);
+    const countMembers = u => u.order.length + u.kids.reduce((s, k) => s + countMembers(k), 0);
+    roots.forEach(measure);
+    roots.forEach(r => { r.size = countMembers(r); });
+    roots.sort((a, b) => (b.size - a.size) || (a.rank - b.rank));
+
+    let cursor = 0;
+    roots.forEach(r => {
+      assign(r, cursor);
+      cursor += r.w + ROOT_GAP;
+    });
+
+    // --- 8) Merkez kişi x=0 olacak şekilde kaydır (ekran merkezleme için)
+    const shiftX = xs[centerId] !== undefined ? -xs[centerId] : 0;
+    Object.keys(xs).forEach(id => { xs[id] += shiftX; });
+    return xs;
+  },
+
+  /**
    * Main Tree Rendering Function
    */
   render(centerPersonId, peopleDict, relsDict, opts = {}) {
@@ -272,17 +444,11 @@ const TreeEngine = {
 
     const sortedLevels = Object.keys(levelGroups).map(Number).sort((a, b) => a - b);
     
-    sortedLevels.forEach(lvl => {
-      const group = levelGroups[lvl];
-      const count = group.length;
-      const totalWidth = count * xSpacing;
-      const startX = - (totalWidth / 2) + (xSpacing / 2);
-      const Y = lvl * ySpacing;
-
-      group.forEach((person, idx) => {
-        const X = startX + (idx * xSpacing);
-        nodeCoords[person.id] = { x: X, y: Y, level: lvl };
-      });
+    // Aile mantığıyla X konumları: eşler yan yana, çocuklar ebeveynin altında
+    const xMap = this.layoutFamilies(visibleIds, peopleDict, relsDict, genLevels, this.centerPersonId, cardW);
+    visibleIds.forEach(pid => {
+      const lvl = genLevels[pid] !== undefined ? genLevels[pid] : 0;
+      nodeCoords[pid] = { x: xMap[pid] !== undefined ? xMap[pid] : 0, y: lvl * ySpacing, level: lvl };
     });
 
     // 4. Render Nodes (ForeignObject Cards)
