@@ -66,6 +66,7 @@
 
     <!-- Header Right Actions & Auth Status -->
     <div class="header-actions">
+      <button id="header-me-btn" class="btn btn-secondary btn-sm" onclick="Kinship.openPicker()">👤 Ben Kimim?</button>
       <div id="app-mode-badge" class="badge badge-demo">⚡ Demo Mod</div>
       <button id="header-admin-btn" class="btn btn-primary btn-sm" onclick="window.location.href='login.html'">🔐 Yönetici Girişi</button>
     </div>
@@ -80,6 +81,7 @@
       <button class="btn btn-primary btn-sm" onclick="Admin.openAddPersonModal()">+ Kişi Ekle</button>
       <button class="btn btn-primary btn-sm" onclick="Admin.openNewChildWizard()">👶 + Yeni Çocuk</button>
       <button class="btn btn-secondary btn-sm" onclick="Admin.openRelationshipModal()">🔗 İlişki Yönetimi</button>
+      <button class="btn btn-secondary btn-sm" onclick="Admin.openDataCheckModal()">🩺 Veri Kontrolü</button>
       <button class="btn btn-secondary btn-sm" onclick="Modal.open('#backup-modal')">💾 Veri Yedeği</button>
       <button class="btn btn-secondary btn-sm" onclick="PrintManager.triggerPrint()">🖨 Soyağacını Yazdır</button>
     </div>
@@ -95,6 +97,8 @@
       <button class="control-btn" title="Uzaklaştır (-)" onclick="TreeEngine.zoomOut()">-</button>
       <button class="control-btn" title="Sıfırla" onclick="TreeEngine.resetZoom()">⟲</button>
       <button class="control-btn" title="Merkeze Odakla" onclick="TreeEngine.recenter()">🎯</button>
+      <button class="control-btn" title="Dalları Katla (sade görünüm)" onclick="TreeEngine.collapseAll()">⊟</button>
+      <button class="control-btn" title="Tüm Dalları Aç" onclick="TreeEngine.expandAll()">⊞</button>
     </div>
   </main>
 
@@ -111,6 +115,10 @@
     <div class="bottom-nav-item" onclick="App.setCenterPerson(CONFIG.DEFAULT_CENTER_PERSON_ID)">
       <span class="nav-icon">👨‍👩‍👧</span>
       <span>Ailem</span>
+    </div>
+    <div class="bottom-nav-item" onclick="Kinship.openPicker()">
+      <span class="nav-icon">👤</span>
+      <span id="nav-me-label">Ben</span>
     </div>
     <div class="bottom-nav-item" onclick="window.location.href='login.html'">
       <span class="nav-icon">🔐</span>
@@ -308,7 +316,7 @@
             <div class="form-group">
               <label class="form-label">İlişki Türü</label>
               <select id="rel-type-select" class="form-control">
-                <option value="parent">1. Kişi -> 2. Kişinin BABA/ANNESİ</option>
+                <option value="parent">1. Kişi, 2. Kişinin ANNE/BABASIDIR (1. kişi üst kuşak)</option>
                 <option value="spouse">1. Kişi ve 2. Kişi EŞTİR</option>
               </select>
             </div>
@@ -354,6 +362,42 @@
     </div>
   </div>
 
+  <!-- MODAL 7: BEN KİMİM? (akrabalık adları için) -->
+  <div id="me-picker-modal" class="modal-backdrop">
+    <div class="modal-window">
+      <div class="modal-header">
+        <div class="modal-title">👤 Ben Kimim?</div>
+        <button class="modal-close-btn" onclick="Modal.close('#me-picker-modal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="font-size: 13px; color: var(--text-muted);">
+          Kendinizi seçin; kartlarda herkesin size göre akrabalık adı (amca, yenge, enişte, kayınpeder…) görünsün. Seçiminiz yalnızca bu cihazda saklanır.
+        </div>
+        <input type="text" id="me-search" class="form-control" placeholder="İsim ara..." oninput="Kinship.renderPickerList()" autocomplete="off">
+        <div id="me-list" style="max-height: 340px; overflow-y: auto;"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="Kinship.clear()">Seçimi Kaldır</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 6: VERİ SAĞLIK KONTROLÜ -->
+  <div id="data-check-modal" class="modal-backdrop">
+    <div class="modal-window">
+      <div class="modal-header">
+        <div class="modal-title">🩺 Veri Sağlık Kontrolü</div>
+        <button class="modal-close-btn" onclick="Modal.close('#data-check-modal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="font-size: 13px; color: var(--text-muted);">
+          Çizgilerin eksik veya yanlış görünmesine yol açan ilişki hatalarını listeler. Ters girilen ebeveyn bağlantılarını tek dokunuşla çevirebilirsiniz.
+        </div>
+        <div id="data-check-list"></div>
+      </div>
+    </div>
+  </div>
+
   <div id="toast-container"></div>
 
   <!-- FIREBASE SDK SCRIPTS (Loaded via official Firebase CDN v8/v9 compat API) -->
@@ -369,6 +413,7 @@
   <script src="js/auth.js"></script>
   <script src="js/people.js"></script>
   <script src="js/relationships.js"></script>
+  <script src="js/kinship.js"></script>
   <script src="js/tree.js"></script>
   <script src="js/search.js"></script>
   <script src="js/admin.js"></script>
