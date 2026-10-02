@@ -58,6 +58,10 @@
     padding: 0 16px;
   }
 
+  #header-me-btn {
+    display: none; /* Mobilde alt menüdeki "Ben" kullanılır */
+  }
+
   .brand-subtitle, .header-stats, .header-search {
     display: none; /* Hide header items in favor of mobile bottom nav & compact view */
   }
@@ -70,11 +74,6 @@
   .tree-controls-bar {
     bottom: 80px;
     right: 16px;
-  }
-
-  .person-card {
-    width: 190px;
-    height: 275px;
   }
 
   .card-photo-wrapper {
