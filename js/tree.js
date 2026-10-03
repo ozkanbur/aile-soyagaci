@@ -491,7 +491,7 @@ const TreeEngine = {
         <div class="person-card ${person.gender} ${isCenter ? 'is-center' : ''} ${childCount > 0 ? 'has-branch' : ''}" onclick="App.onCardClick('${person.id}')">
           <div class="card-generation-badge">${romanGen}</div>
           <div class="card-status-badge ${isDeceased ? 'deceased' : 'living'}">
-            ${isDeceased ? '🕊️ Vefat' : '🟢 Yaşıyor'}
+            ${isDeceased ? '🎗️' : '🟢'}
           </div>
 
           <div class="card-photo-wrapper">
@@ -508,8 +508,6 @@ const TreeEngine = {
           <div class="card-divider"></div>
 
           <div class="card-relation-counts">
-            <div class="count-chip"><span>${Relationships.getParents(person.id, peopleDict, relsDict).length}</span>Anne/Baba</div>
-            <div class="count-chip"><span>${Relationships.getSpouses(person.id, peopleDict, relsDict).length}</span>Eş</div>
             <div class="count-chip"><span>${childCount}</span>Çocuk</div>
           </div>
           ${branchHtml}
