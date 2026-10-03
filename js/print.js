@@ -133,20 +133,13 @@ const PrintManager = {
          <text x="${cx}" y="${cy + 24}" text-anchor="middle" font-family="Outfit, Arial, sans-serif"
                font-size="10" fill="#94a3b8">${esc(this.truncate(person.firstName, 14))}</text>`;
 
-    const statusText = deceased ? 'Vefat' : 'Yaşıyor';
-    const statusColor = deceased ? '#d1d5db' : '#34d399';
     const statusFill = deceased ? '#6b7280' : '#10b981';
 
-    const colW = (W - 24) / 3;
-    const countCols = [
-      [counts.parents, 'Anne/Baba'],
-      [counts.spouses, 'Eş'],
-      [counts.children, 'Çocuk']
-    ].map((c, i) => `
-        <text x="${x + 12 + colW * i + colW / 2}" y="${y + H - 22}" text-anchor="middle"
-              font-family="Outfit, Arial, sans-serif" font-size="14" font-weight="700" fill="#f4e285">${c[0]}</text>
-        <text x="${x + 12 + colW * i + colW / 2}" y="${y + H - 10}" text-anchor="middle"
-              font-family="Outfit, Arial, sans-serif" font-size="9" fill="#94a3b8">${c[1]}</text>`).join('');
+    const countCols = `
+        <text x="${cx}" y="${y + H - 22}" text-anchor="middle"
+              font-family="Outfit, Arial, sans-serif" font-size="14" font-weight="700" fill="#f4e285">${counts.children}</text>
+        <text x="${cx}" y="${y + H - 10}" text-anchor="middle"
+              font-family="Outfit, Arial, sans-serif" font-size="9" fill="#94a3b8">Çocuk</text>`;
 
     return `
       <g>
@@ -165,11 +158,11 @@ const PrintManager = {
         <text x="${x + 17}" y="${y + 29 + topOffset}" font-family="Outfit, Arial, sans-serif" font-size="9.5"
               font-weight="700" letter-spacing="0.6" fill="#f4e285">${esc(node.gen)}</text>
 
-        <rect x="${x + W - 82}" y="${y + 16 + topOffset}" width="72" height="18" rx="9"
+        <rect x="${x + W - 38}" y="${y + 16 + topOffset}" width="28" height="18" rx="9"
               fill="${statusFill}" fill-opacity="0.18" stroke="${statusFill}" stroke-opacity="0.45"/>
-        <circle cx="${x + W - 70}" cy="${y + 25 + topOffset}" r="3.5" fill="${statusFill}"/>
-        <text x="${x + W - 62}" y="${y + 29 + topOffset}" font-family="Outfit, Arial, sans-serif" font-size="10.5"
-              font-weight="600" fill="${statusColor}">${statusText}</text>
+        ${deceased
+          ? `<text x="${x + W - 24}" y="${y + 29.5 + topOffset}" text-anchor="middle" font-size="11">🎗️</text>`
+          : `<circle cx="${x + W - 24}" cy="${y + 25 + topOffset}" r="4.5" fill="#10b981"/>`}
 
         <circle cx="${cx}" cy="${cy}" r="54" fill="url(#pGold)"/>
         ${avatar}
