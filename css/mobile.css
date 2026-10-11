@@ -58,8 +58,9 @@
     padding: 0 16px;
   }
 
-  #header-me-btn {
-    display: none; /* Mobilde alt menüdeki "Ben" kullanılır */
+  #header-me-btn,
+  #header-stats-btn {
+    display: none; /* Mobilde alt menüdeki "Ben" ve "İstatistik" kullanılır */
   }
 
   .brand-subtitle, .header-stats, .header-search {
