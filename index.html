@@ -66,6 +66,7 @@
 
     <!-- Header Right Actions & Auth Status -->
     <div class="header-actions">
+      <a id="header-stats-btn" href="istatistik.html" class="btn btn-secondary btn-sm">📊 İstatistik</a>
       <button id="header-me-btn" class="btn btn-secondary btn-sm" onclick="Kinship.openPicker()">👤 Ben Kimim?</button>
       <div id="app-mode-badge" class="badge badge-demo">⚡ Demo Mod</div>
       <button id="header-admin-btn" class="btn btn-primary btn-sm" onclick="window.location.href='login.html'">🔐 Yönetici Girişi</button>
@@ -112,9 +113,9 @@
       <span class="nav-icon">🔎</span>
       <span>Ara</span>
     </div>
-    <div class="bottom-nav-item" onclick="App.setCenterPerson(CONFIG.DEFAULT_CENTER_PERSON_ID)">
-      <span class="nav-icon">👨‍👩‍👧</span>
-      <span>Ailem</span>
+    <div class="bottom-nav-item" onclick="window.location.href='istatistik.html'">
+      <span class="nav-icon">📊</span>
+      <span>İstatistik</span>
     </div>
     <div class="bottom-nav-item" onclick="Kinship.openPicker()">
       <span class="nav-icon">👤</span>

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aile İstatistikleri</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/global.css">
+  <link rel="stylesheet" href="css/stats.css">
+</head>
+<body class="st-body">
+
+  <header class="st-header">
+    <a href="index.html" class="btn btn-secondary btn-sm">← Soyağacı</a>
+    <div class="st-title">📊 Aile İstatistikleri</div>
+    <span id="st-mode" style="font-size:16px; min-width:24px; text-align:right;"></span>
+  </header>
+
+  <nav class="st-tabs">
+    <a href="#st-ozet">🌳 Özet</a>
+    <a href="#st-yil">📅 Yıl</a>
+    <a href="#st-ay">🗓️ Ay</a>
+    <a href="#st-gun">🎂 Gün</a>
+    <a href="#st-takvim">🗺️ Takvim</a>
+    <a href="#st-burc">♈ Burçlar</a>
+    <a href="#st-harita">🇹🇷 Harita</a>
+  </nav>
+
+  <main id="st-root" class="st-main">
+    <div class="st-empty">Veriler yükleniyor…</div>
+  </main>
+
+  <!-- Kişi listesi penceresi -->
+  <div id="st-sheet-backdrop" class="st-sheet-backdrop" onclick="if (event.target === this) StatsPage.close()">
+    <div class="st-sheet" id="st-sheet-content"></div>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <script src="js/config.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/database.js"></script>
+  <script src="js/geo-data.js"></script>
+  <script src="js/places.js"></script>
+  <script src="js/zodiac.js"></script>
+  <script src="js/stats-engine.js"></script>
+  <script src="js/stats-page.js"></script>
+
+  <script>
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') StatsPage.close(); });
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        await Database.init();
+        Database.onDataChange(() => StatsPage.render());
+      } catch (err) {
+        console.error('İstatistik başlatma hatası:', err);
+        document.getElementById('st-root').innerHTML =
+          '<div class="st-empty">Veriler okunamadı: ' + Utils.escapeHtml(err.message) + '</div>';
+      }
+    });
+  </script>
+</body>
+</html>
