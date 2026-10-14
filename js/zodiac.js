@@ -22,17 +22,17 @@ const Zodiac = {
 
   CHINESE: [
     { id: 'fare',    name: 'Fare',     emoji: '🐀' },
-    { id: 'okuz',    name: 'Öküz',     emoji: '🐂' },
+    { id: 'okuz',    name: 'Boğa',     emoji: '🐂' },
     { id: 'kaplan',  name: 'Kaplan',   emoji: '🐅' },
     { id: 'tavsan',  name: 'Tavşan',   emoji: '🐇' },
     { id: 'ejderha', name: 'Ejderha',  emoji: '🐉' },
     { id: 'yilan',   name: 'Yılan',    emoji: '🐍' },
     { id: 'at',      name: 'At',       emoji: '🐎' },
     { id: 'keci',    name: 'Keçi',     emoji: '🐐' },
-    { id: 'maymun',  name: 'Maymun',   emoji: '🐒' },
+    { id: 'maymun',  name: 'Tilki',    emoji: '🦊' },
     { id: 'horoz',   name: 'Horoz',    emoji: '🐓' },
     { id: 'kopek',   name: 'Köpek',    emoji: '🐕' },
-    { id: 'domuz',   name: 'Domuz',    emoji: '🐖' }
+    { id: 'domuz',   name: 'Geyik',    emoji: '🦌' }
   ],
 
   ELEMENTS: ['Maden', 'Maden', 'Su', 'Su', 'Ağaç', 'Ağaç', 'Ateş', 'Ateş', 'Toprak', 'Toprak'],
